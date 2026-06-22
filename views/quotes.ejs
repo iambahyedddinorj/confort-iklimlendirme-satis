@@ -1,0 +1,57 @@
+<%- include('layout') %>
+
+<div class="flex justify-between items-center mb-6">
+  <span class="text-muted text-sm"><%= quotes.length %> teklif</span>
+  <div class="flex gap-3">
+    <a href="/teklif/excel-import" class="bg-surface border border-border hover:border-green-600 text-muted hover:text-green-400 px-4 py-2 rounded-lg font-bold flex items-center gap-2">
+      <span class="material-symbols-outlined text-[18px]">upload_file</span> Excel'den Aktar
+    </a>
+    <a href="/teklif/yeni" class="bg-red hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2">
+      <span class="material-symbols-outlined text-[18px]">add</span> Yeni Teklif
+    </a>
+  </div>
+</div>
+
+<div class="bg-surface border border-border rounded-xl overflow-hidden">
+  <% if (quotes.length) { %>
+  <div class="overflow-x-auto">
+    <table class="w-full text-left text-sm">
+      <thead><tr class="text-muted border-b border-border bg-bg/50">
+        <th class="py-3 px-4">#</th>
+        <th class="py-3 px-4">Müşteri</th>
+        <th class="py-3 px-4">Tarih</th>
+        <th class="py-3 px-4">Geçerlilik</th>
+        <th class="py-3 px-4 text-right">Tutar</th>
+        <th class="py-3 px-4 text-center">Durum</th>
+        <th class="py-3 px-4 text-right">İşlem</th>
+      </tr></thead>
+      <tbody>
+        <% quotes.forEach(q => { %>
+        <tr class="border-b border-border/30 hover:bg-white/5 cursor-pointer" onclick="location.href='/teklif/<%= q.id %>'">
+          <td class="py-3 px-4 text-muted">#<%= q.id %></td>
+          <td class="py-3 px-4"><span class="text-red font-medium"><%= q.customer_name || '-' %></span><% if (q.customer_phone) { %><br><span class="text-muted text-xs"><%= q.customer_phone %></span><% } %></td>
+          <td class="py-3 px-4 text-muted"><%= q.quote_date %></td>
+          <td class="py-3 px-4 text-muted"><%= q.valid_until || '-' %></td>
+          <td class="py-3 px-4 text-right font-bold"><%= q.subtotal ? money(q.subtotal) : '-' %></td>
+          <td class="py-3 px-4 text-center">
+            <span class="px-2 py-1 rounded-full text-xs font-bold <%=
+              q.status==='Onaylandı'?'bg-green-900/50 text-green-400':
+              q.status==='Reddedildi'?'bg-red-900/50 text-red-400':
+              q.status==='Gönderildi'?'bg-blue-900/50 text-blue-400':
+              'bg-yellow-900/50 text-yellow-400' %>"><%= q.status %></span>
+          </td>
+          <td class="py-3 px-4 text-right whitespace-nowrap" onclick="event.stopPropagation()">
+            <a href="/teklif/duzenle/<%= q.id %>" class="text-muted hover:text-red"><span class="material-symbols-outlined text-[18px]">edit</span></a>
+            <form method="POST" action="/teklif/sil" class="inline" onsubmit="return confirm('Bu teklifi silmek istediğinden emin misin?')"><input type="hidden" name="id" value="<%= q.id %>"><button class="text-muted hover:text-red ml-2"><span class="material-symbols-outlined text-[18px]">delete</span></button></form>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <% } else { %>
+  <p class="text-muted text-center py-12">Henüz teklif yok.</p>
+  <% } %>
+</div>
+
+<%- include('layout-end') %>

@@ -1,0 +1,57 @@
+<% const page='customers'; const title=customer.name; %>
+<%- include('layout') %>
+
+<div class="flex flex-col sm:flex-row gap-4 mb-6">
+  <a href="/musteri/duzenle/<%= customer.id %>" class="bg-surface border border-border hover:border-red text-muted hover:text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+    <span class="material-symbols-outlined text-[18px]">edit</span> Düzenle
+  </a>
+  <a href="/satis/yeni?musteri=<%= customer.id %>" class="bg-red hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-bold transition-colors">
+    <span class="material-symbols-outlined text-[18px]">add</span> Satış Ekle
+  </a>
+  <form method="POST" action="/musteri/sil" onsubmit="return confirm('Bu müşteriyi ve tüm satış kayıtlarını silmek istediğinden emin misin?')">
+    <input type="hidden" name="id" value="<%= customer.id %>">
+    <button class="bg-surface border border-red-900 text-red hover:bg-red-900/30 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+      <span class="material-symbols-outlined text-[18px]">delete</span> Sil
+    </button>
+  </form>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="bg-surface border border-border rounded-xl p-5">
+    <h3 class="text-red font-bold mb-4 flex items-center gap-2"><span class="material-symbols-outlined">person</span> Müşteri Bilgileri</h3>
+    <div class="space-y-3 text-sm">
+      <div><span class="text-muted">Telefon:</span> <span class="ml-2"><%= customer.phone || '-' %></span></div>
+      <div><span class="text-muted">E-posta:</span> <span class="ml-2"><%= customer.email || '-' %></span></div>
+      <div><span class="text-muted">Şehir:</span> <span class="ml-2"><%= customer.city || '-' %></span></div>
+      <div><span class="text-muted">Adres:</span> <span class="ml-2"><%= customer.address || '-' %></span></div>
+      <% if (customer.notes) { %><div><span class="text-muted">Not:</span> <span class="ml-2"><%= customer.notes %></span></div><% } %>
+      <div><span class="text-muted">Kayıt:</span> <span class="ml-2 text-muted"><%= customer.created_at %></span></div>
+    </div>
+  </div>
+
+  <div class="lg:col-span-2 bg-surface border border-border rounded-xl p-5">
+    <h3 class="text-red font-bold mb-4 flex items-center gap-2"><span class="material-symbols-outlined">receipt_long</span> Satış Geçmişi (<%= sales.length %>)</h3>
+    <% if (sales.length) { %>
+    <div class="space-y-3">
+      <% sales.forEach(s => { %>
+      <a href="/satis/<%= s.id %>" class="block bg-bg border border-border rounded-lg p-4 hover:border-red/50 transition-colors">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="font-bold"><%= s.product_name %></p>
+            <p class="text-muted text-sm mt-1">İç: <span class="text-text"><%= s.ic_unite_seri || '-' %></span> · Dış: <span class="text-text"><%= s.dis_unite_seri || '-' %></span></p>
+          </div>
+          <div class="text-right">
+            <p class="font-bold text-green-400"><%= money(s.price) %></p>
+            <p class="text-muted text-sm"><%= s.sale_date %></p>
+          </div>
+        </div>
+      </a>
+      <% }) %>
+    </div>
+    <% } else { %>
+    <p class="text-muted text-center py-6">Bu müşteriye henüz satış yapılmamış.</p>
+    <% } %>
+  </div>
+</div>
+
+<%- include('layout-end') %>

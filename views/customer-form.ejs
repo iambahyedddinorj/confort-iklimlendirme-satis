@@ -1,0 +1,46 @@
+<% const page='customers'; const title=customer?'Müşteri Düzenle':'Yeni Müşteri'; %>
+<%- include('layout') %>
+
+<form method="POST" action="/musteri/kaydet" class="max-w-2xl">
+  <% if (customer) { %><input type="hidden" name="id" value="<%= customer.id %>"><% } %>
+
+  <div class="bg-surface border border-border rounded-xl p-6 space-y-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label class="text-muted text-sm block mb-1">Ad Soyad *</label>
+        <input name="name" required value="<%= customer?customer.name:'' %>" class="w-full bg-bg border border-border rounded-lg px-4 py-3 text-white focus:border-red focus:outline-none" placeholder="Ahmet Yılmaz">
+      </div>
+      <div>
+        <label class="text-muted text-sm block mb-1">Telefon</label>
+        <input name="phone" value="<%= customer?customer.phone||'':'' %>" class="w-full bg-bg border border-border rounded-lg px-4 py-3 text-white focus:border-red focus:outline-none" placeholder="0542 xxx xx xx">
+      </div>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label class="text-muted text-sm block mb-1">E-posta</label>
+        <input name="email" type="email" value="<%= customer?customer.email||'':'' %>" class="w-full bg-bg border border-border rounded-lg px-4 py-3 text-white focus:border-red focus:outline-none" placeholder="ornek@mail.com">
+      </div>
+      <div>
+        <label class="text-muted text-sm block mb-1">Şehir</label>
+        <input name="city" value="<%= customer?customer.city||'':'' %>" class="w-full bg-bg border border-border rounded-lg px-4 py-3 text-white focus:border-red focus:outline-none" placeholder="Şanlıurfa">
+      </div>
+    </div>
+    <div>
+      <label class="text-muted text-sm block mb-1">Adres</label>
+      <textarea name="address" rows="2" class="w-full bg-bg border border-border rounded-lg px-4 py-3 text-white focus:border-red focus:outline-none resize-none" placeholder="Tam adres"><%= customer?customer.address||'':'' %></textarea>
+    </div>
+    <div>
+      <label class="text-muted text-sm block mb-1">Notlar</label>
+      <textarea name="notes" rows="2" class="w-full bg-bg border border-border rounded-lg px-4 py-3 text-white focus:border-red focus:outline-none resize-none" placeholder="Ek notlar..."><%= customer?customer.notes||'':'' %></textarea>
+    </div>
+  </div>
+
+  <div class="flex gap-3 mt-4">
+    <button type="submit" class="bg-red hover:bg-red-700 text-white font-bold px-8 py-3 rounded-lg transition-colors">
+      <%= customer ? 'Güncelle' : 'Kaydet' %>
+    </button>
+    <a href="<%= customer ? '/musteri/'+customer.id : '/musteriler' %>" class="bg-surface border border-border text-muted px-6 py-3 rounded-lg hover:text-white transition-colors">İptal</a>
+  </div>
+</form>
+
+<%- include('layout-end') %>

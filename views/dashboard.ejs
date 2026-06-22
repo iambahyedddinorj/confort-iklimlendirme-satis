@@ -1,0 +1,95 @@
+<% const page='dash'; const title='Ana Sayfa'; %>
+<%- include('layout') %>
+
+<div class="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
+  <div class="bg-surface border border-border rounded-xl p-5">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-muted text-sm">Toplam Müşteri</span>
+      <span class="material-symbols-outlined text-red">group</span>
+    </div>
+    <p class="text-3xl font-bold text-red"><%= totalCustomers %></p>
+  </div>
+  <div class="bg-surface border border-border rounded-xl p-5">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-muted text-sm">Toplam Satış</span>
+      <span class="material-symbols-outlined text-red">receipt_long</span>
+    </div>
+    <p class="text-3xl font-bold text-red"><%= totalSales %></p>
+  </div>
+  <div class="bg-surface border border-border rounded-xl p-5">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-muted text-sm">Toplam Ciro</span>
+      <span class="material-symbols-outlined text-red">payments</span>
+    </div>
+    <p class="text-2xl font-bold text-green-400"><%= money(totalRevenue) %></p>
+  </div>
+  <div class="bg-surface border border-border rounded-xl p-5">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-muted text-sm">Toplam Alacak</span>
+      <span class="material-symbols-outlined text-red">money_off</span>
+    </div>
+    <p class="text-2xl font-bold <%= totalDebt > 0 ? 'text-red' : 'text-green-400' %>"><%= money(totalDebt) %></p>
+  </div>
+  <div class="bg-surface border border-border rounded-xl p-5">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-muted text-sm">Düşük Stok</span>
+      <span class="material-symbols-outlined text-red">inventory_2</span>
+    </div>
+    <p class="text-2xl font-bold <%= lowStockCount > 0 ? 'text-red' : 'text-green-400' %>"><%= lowStockCount %></p>
+  </div>
+</div>
+
+<% if (monthlySales.length) { %>
+<div class="bg-surface border border-border rounded-xl p-5 mb-6">
+  <h2 class="text-lg font-bold text-red mb-4">Aylık Satış</h2>
+  <div class="flex items-end gap-3 h-40">
+    <% const maxS = Math.max(...monthlySales.map(m=>m.s),1); %>
+    <% monthlySales.forEach(m => { const h = Math.round(m.s/maxS*100); %>
+      <div class="flex-grow flex flex-col items-center gap-2 group">
+        <div class="w-full bg-red/30 hover:bg-red/50 rounded-t transition-colors relative" style="height:<%= Math.max(h,4) %>%">
+          <span class="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] text-muted opacity-0 group-hover:opacity-100 whitespace-nowrap"><%= money(m.s) %></span>
+        </div>
+        <span class="text-[10px] text-muted"><%= m.m.slice(5) %>/<%= m.m.slice(2,4) %></span>
+        <span class="text-[10px] text-muted"><%= m.c %> adet</span>
+      </div>
+    <% }) %>
+  </div>
+</div>
+<% } %>
+
+<div class="bg-surface border border-border rounded-xl p-5">
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-lg font-bold text-red">Son Satışlar</h2>
+    <a href="/satislar" class="text-red text-sm hover:underline">Tümü →</a>
+  </div>
+  <% if (recentSales.length) { %>
+  <div class="overflow-x-auto">
+    <table class="w-full text-left text-sm">
+      <thead><tr class="text-muted border-b border-border"><th class="py-2 pr-3">Müşteri</th><th class="py-2 pr-3">Ürün</th><th class="py-2 pr-3">Tarih</th><th class="py-2 text-right">Tutar</th></tr></thead>
+      <tbody>
+        <% recentSales.forEach(s => { %>
+        <tr class="border-b border-border/30 hover:bg-white/5">
+          <td class="py-3 pr-3"><a href="/musteri/<%= s.customer_id %>" class="text-red hover:underline"><%= s.customer_name %></a></td>
+          <td class="py-3 pr-3"><a href="/satis/<%= s.id %>" class="hover:text-red"><%= s.product_name %></a></td>
+          <td class="py-3 pr-3 text-muted"><%= s.sale_date %></td>
+          <td class="py-3 text-right font-bold"><%= money(s.price) %></td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <% } else { %>
+  <p class="text-muted text-center py-8">Henüz satış kaydı yok.</p>
+  <% } %>
+</div>
+
+<div class="fixed bottom-6 right-6 flex gap-3">
+  <a href="/musteri/yeni" class="bg-surface border border-border hover:border-red text-text px-5 py-3 rounded-full shadow-lg flex items-center gap-2 transition-colors">
+    <span class="material-symbols-outlined">person_add</span> Müşteri Ekle
+  </a>
+  <a href="/satis/yeni" class="bg-red hover:bg-red-700 text-white px-5 py-3 rounded-full shadow-lg flex items-center gap-2 font-bold transition-colors">
+    <span class="material-symbols-outlined">add</span> Yeni Satış
+  </a>
+</div>
+
+<%- include('layout-end') %>

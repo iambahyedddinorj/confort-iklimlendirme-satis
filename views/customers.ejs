@@ -1,0 +1,40 @@
+<% const page='customers'; const title='Müşteriler'; %>
+<%- include('layout') %>
+
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+  <form method="GET" class="flex gap-2 w-full sm:w-auto">
+    <input name="q" value="<%= search %>" placeholder="Müşteri ara (ad veya telefon)..." class="bg-surface border border-border rounded-lg px-4 py-2 text-white focus:border-red focus:outline-none flex-grow sm:w-72">
+    <button class="bg-red text-white px-4 py-2 rounded-lg">Ara</button>
+  </form>
+  <a href="/musteri/yeni" class="bg-red hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors whitespace-nowrap">
+    <span class="material-symbols-outlined text-[18px]">person_add</span> Yeni Müşteri
+  </a>
+</div>
+
+<div class="bg-surface border border-border rounded-xl overflow-hidden">
+  <% if (customers.length) { %>
+  <div class="overflow-x-auto">
+    <table class="w-full text-left text-sm">
+      <thead><tr class="text-muted border-b border-border bg-bg/50"><th class="py-3 px-4">Ad Soyad</th><th class="py-3 px-4">Telefon</th><th class="py-3 px-4 hidden sm:table-cell">Şehir</th><th class="py-3 px-4 text-right">İşlem</th></tr></thead>
+      <tbody>
+        <% customers.forEach(c => { %>
+        <tr class="border-b border-border/30 hover:bg-white/5">
+          <td class="py-3 px-4"><a href="/musteri/<%= c.id %>" class="text-red hover:underline font-medium"><%= c.name %></a></td>
+          <td class="py-3 px-4 text-muted"><%= c.phone || '-' %></td>
+          <td class="py-3 px-4 text-muted hidden sm:table-cell"><%= c.city || '-' %></td>
+          <td class="py-3 px-4 text-right whitespace-nowrap">
+            <a href="/musteri/<%= c.id %>" class="text-muted hover:text-red"><span class="material-symbols-outlined text-[18px]">visibility</span></a>
+            <a href="/musteri/duzenle/<%= c.id %>" class="text-muted hover:text-red ml-2"><span class="material-symbols-outlined text-[18px]">edit</span></a>
+            <form method="POST" action="/musteri/sil" class="inline" onsubmit="return confirm('Bu müşteriyi silmek istediğinden emin misin?')"><input type="hidden" name="id" value="<%= c.id %>"><button class="text-muted hover:text-red ml-2"><span class="material-symbols-outlined text-[18px]">delete</span></button></form>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <% } else { %>
+  <p class="text-muted text-center py-12"><%= search ? 'Sonuç bulunamadı.' : 'Henüz müşteri yok.' %></p>
+  <% } %>
+</div>
+
+<%- include('layout-end') %>

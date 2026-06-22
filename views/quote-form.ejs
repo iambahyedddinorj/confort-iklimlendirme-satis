@@ -1,0 +1,165 @@
+<%- include('layout') %>
+
+<form method="POST" action="/teklif/kaydet" class="max-w-4xl" id="qf">
+  <% if (quote) { %><input type="hidden" name="id" value="<%= quote.id %>"><% } %>
+
+  <div class="bg-surface border border-border rounded-xl p-6 space-y-4 mb-6">
+    <h3 class="text-red font-bold">Müşteri Bilgileri</h3>
+    <div>
+      <label class="text-muted text-sm block mb-1">Kayıtlı Müşteri (opsiyonel)</label>
+      <select name="customer_id" id="cust-select" class="w-full bg-bg border border-border rounded-lg px-4 py-3 text-white focus:border-red focus:outline-none" onchange="fillCustomer()">
+        <option value="">Listeden seç veya aşağıya yaz...</option>
+        <% customers.forEach(c => { %>
+        <option value="<%= c.id %>" data-phone="<%= c.phone||'' %>" data-addr="<%= [c.address,c.city].filter(Boolean).join(', ') %>" <%= quote&&quote.customer_id==c.id?'selected':'' %>><%= c.name %> <% if(c.phone){%>(<%= c.phone %>)<%}%></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div>
+        <label class="text-muted text-sm block mb-1">Ad Soyad</label>
+        <input name="customer_name" id="cn" value="<%= quote?quote.customer_name||'':'' %>" class="w-full bg-bg border border-border rounded-lg px-4 py-3 text-white focus:border-red focus:outline-none">
+      </div>
+      <div>
+        <label class="text-muted text-sm block mb-1">Telefon</label>
+        <input name="customer_phone" id="cp" value="<%= quote?quote.customer_phone||'':'' %>" class="w-full bg-bg border border-border rounded-lg px-4 py-3 text-white focus:border-red focus:outline-none">
+      </div>
+      <div>
+        <label class="text-muted text-sm block mb-1">Adres</label>
+        <input name="customer_address" id="ca" value="<%= quote?quote.customer_address||'':'' %>" class="w-full bg-bg border border-border rounded-lg px-4 py-3 text-white focus:border-red focus:outline-none">
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-surface border border-border rounded-xl p-6 space-y-4 mb-6">
+    <h3 class="text-red font-bold">Teklif Detayları</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <div>
+        <label class="text-muted text-sm block mb-1">Teklif Tarihi *</label>
+        <input name="quote_date" type="date" required value="<%= quote?quote.quote_date:new Date().toISOString().slice(0,10) %>" class="w-full bg-bg border border-border rounded-lg px-4 py-3 text-white focus:border-red focus:outline-none">
+      </div>
+      <div>
+        <label class="text-muted text-sm block mb-1">Geçerlilik Tarihi</label>
+        <input name="valid_until" type="date" value="<%= quote?quote.valid_until||'':'' %>" class="w-full bg-bg border border-border rounded-lg px-4 py-3 text-white focus:border-red focus:outline-none">
+      </div>
+      <div>
+        <label class="text-muted text-sm block mb-1">KDV (%)</label>
+        <input name="tax_rate" type="number" step="0.01" value="<%= quote?quote.tax_rate:20 %>" class="w-full bg-bg border border-border rounded-lg px-4 py-3 text-white focus:border-red focus:outline-none">
+      </div>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div>
+        <label class="text-muted text-sm block mb-1">İndirim Türü</label>
+        <select name="discount_type" class="w-full bg-bg border border-border rounded-lg px-4 py-3 text-white focus:border-red focus:outline-none">
+          <option value="none" <%= !quote||quote.discount_type==='none'?'selected':'' %>>İndirim Yok</option>
+          <option value="percent" <%= quote&&quote.discount_type==='percent'?'selected':'' %>>Yüzde (%)</option>
+          <option value="amount" <%= quote&&quote.discount_type==='amount'?'selected':'' %>>Tutar (₺)</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-muted text-sm block mb-1">İndirim Değeri</label>
+        <input name="discount_value" type="number" step="0.01" value="<%= quote?quote.discount_value:0 %>" class="w-full bg-bg border border-border rounded-lg px-4 py-3 text-white focus:border-red focus:outline-none">
+      </div>
+    </div>
+    <div>
+      <label class="text-muted text-sm block mb-1">Notlar</label>
+      <textarea name="notes" rows="2" class="w-full bg-bg border border-border rounded-lg px-4 py-3 text-white focus:border-red focus:outline-none resize-none"><%= quote?quote.notes||'':'' %></textarea>
+    </div>
+  </div>
+
+  <datalist id="dl-products">
+    <option value="Confort 12000 BTU Inverter Klima">
+    <option value="Confort 18000 BTU Inverter Klima">
+    <option value="Confort 24000 BTU Inverter Klima">
+    <option value="Confort 9000 BTU Inverter Klima">
+    <option value="Salon Tipi Klima">
+    <option value="VRF Sistem">
+    <option value="Klima Bakım & Onarım">
+    <option value="Klima Montaj">
+    <option value="Klima Demontaj">
+    <option value="Klima Taşıma">
+    <option value="Gaz Şarjı (R410A)">
+    <option value="Gaz Şarjı (R32)">
+    <option value="Bakır Boru (metre)">
+    <option value="Drenaj Hortumu">
+    <option value="Elektrik Tesisatı">
+    <option value="İşçilik">
+  </datalist>
+
+  <div class="bg-surface border border-border rounded-xl p-6 mb-6">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-red font-bold">Kalemler</h3>
+      <button type="button" onclick="addRow()" class="text-red hover:text-red-400 flex items-center gap-1 text-sm font-bold"><span class="material-symbols-outlined text-[18px]">add_circle</span> Kalem Ekle</button>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm" id="items-table">
+        <thead><tr class="text-muted border-b border-border">
+          <th class="py-2 pr-2 text-left">Ürün / Hizmet</th>
+          <th class="py-2 pr-2 text-left">Açıklama</th>
+          <th class="py-2 pr-2 w-20 text-center">Miktar</th>
+          <th class="py-2 pr-2 w-20 text-center">Birim</th>
+          <th class="py-2 pr-2 w-28 text-right">Birim Fiyat</th>
+          <th class="py-2 pr-2 w-28 text-right">Toplam</th>
+          <th class="py-2 w-10"></th>
+        </tr></thead>
+        <tbody id="items-body">
+          <% if (items.length) { items.forEach(item => { %>
+          <tr class="item-row border-b border-border/30">
+            <td class="py-2 pr-2"><input name="item_name[]" list="dl-products" value="<%= item.product_name %>" required class="w-full bg-bg border border-border rounded px-3 py-2 text-white text-sm focus:border-red focus:outline-none" placeholder="Ürün adı"></td>
+            <td class="py-2 pr-2"><input name="item_desc[]" value="<%= item.description||'' %>" class="w-full bg-bg border border-border rounded px-3 py-2 text-white text-sm focus:border-red focus:outline-none" placeholder="Açıklama"></td>
+            <td class="py-2 pr-2"><input name="item_qty[]" type="number" step="0.01" value="<%= item.quantity %>" class="w-full bg-bg border border-border rounded px-3 py-2 text-white text-sm text-center focus:border-red focus:outline-none calc" min="0"></td>
+            <td class="py-2 pr-2"><select name="item_unit[]" class="w-full bg-bg border border-border rounded px-3 py-2 text-white text-sm text-center focus:border-red focus:outline-none"><option value="Adet" <%= item.unit==='Adet'?'selected':'' %>>Adet</option><option value="Set" <%= item.unit==='Set'?'selected':'' %>>Set</option><option value="Metre" <%= item.unit==='Metre'?'selected':'' %>>Metre</option><option value="Kg" <%= item.unit==='Kg'?'selected':'' %>>Kg</option><option value="Saat" <%= item.unit==='Saat'?'selected':'' %>>Saat</option><option value="Gün" <%= item.unit==='Gün'?'selected':'' %>>Gün</option><option value="Hizmet" <%= item.unit==='Hizmet'?'selected':'' %>>Hizmet</option></select></td>
+            <td class="py-2 pr-2"><input name="item_price[]" type="number" step="0.01" value="<%= item.unit_price %>" class="w-full bg-bg border border-border rounded px-3 py-2 text-white text-sm text-right focus:border-red focus:outline-none calc" min="0"></td>
+            <td class="py-2 pr-2 text-right font-bold row-total"><%= (item.quantity * item.unit_price).toLocaleString('tr-TR', {minimumFractionDigits:2}) %> ₺</td>
+            <td class="py-2"><button type="button" onclick="this.closest('tr').remove();calcTotals()" class="text-muted hover:text-red"><span class="material-symbols-outlined text-[18px]">close</span></button></td>
+          </tr>
+          <% }) } %>
+        </tbody>
+        <tfoot>
+          <tr><td colspan="5" class="text-right py-2 text-muted">Ara Toplam:</td><td class="text-right py-2 font-bold" id="ft-sub">0 ₺</td><td></td></tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div class="flex gap-3">
+    <button type="submit" class="bg-red hover:bg-red-700 text-white font-bold px-8 py-3 rounded-lg"><%= quote ? 'Güncelle' : 'Oluştur' %></button>
+    <a href="<%= quote ? '/teklif/'+quote.id : '/teklifler' %>" class="bg-surface border border-border text-muted px-6 py-3 rounded-lg hover:text-white">İptal</a>
+  </div>
+</form>
+
+<script>
+function fillCustomer(){
+  const sel = document.getElementById('cust-select');
+  const opt = sel.options[sel.selectedIndex];
+  if(opt.value){ document.getElementById('cn').value=opt.textContent.split('(')[0].trim(); document.getElementById('cp').value=opt.dataset.phone; document.getElementById('ca').value=opt.dataset.addr; }
+}
+function addRow(){
+  const row = document.createElement('tr');
+  row.className = 'item-row border-b border-border/30';
+  row.innerHTML = '<td class="py-2 pr-2"><input name="item_name[]" list="dl-products" required class="w-full bg-bg border border-border rounded px-3 py-2 text-white text-sm focus:border-red focus:outline-none" placeholder="Ürün adı"></td>'
+    +'<td class="py-2 pr-2"><input name="item_desc[]" class="w-full bg-bg border border-border rounded px-3 py-2 text-white text-sm focus:border-red focus:outline-none" placeholder="Açıklama"></td>'
+    +'<td class="py-2 pr-2"><input name="item_qty[]" type="number" step="0.01" value="1" class="w-full bg-bg border border-border rounded px-3 py-2 text-white text-sm text-center focus:border-red focus:outline-none calc" min="0"></td>'
+    +'<td class="py-2 pr-2"><select name="item_unit[]" class="w-full bg-bg border border-border rounded px-3 py-2 text-white text-sm text-center focus:border-red focus:outline-none"><option>Adet</option><option>Set</option><option>Metre</option><option>Kg</option><option>Saat</option><option>Gün</option><option>Hizmet</option></select></td>'
+    +'<td class="py-2 pr-2"><input name="item_price[]" type="number" step="0.01" value="0" class="w-full bg-bg border border-border rounded px-3 py-2 text-white text-sm text-right focus:border-red focus:outline-none calc" min="0"></td>'
+    +'<td class="py-2 pr-2 text-right font-bold row-total">0 ₺</td>'
+    +'<td class="py-2"><button type="button" onclick="this.closest(\'tr\').remove();calcTotals()" class="text-muted hover:text-red"><span class="material-symbols-outlined text-[18px]">close</span></button></td>';
+  document.getElementById('items-body').appendChild(row);
+  row.querySelectorAll('.calc').forEach(i=>i.addEventListener('input',calcTotals));
+  row.querySelector('input').focus();
+}
+function calcTotals(){
+  let sub=0;
+  document.querySelectorAll('.item-row').forEach(r=>{
+    const q=parseFloat(r.querySelector('[name="item_qty[]"]').value)||0;
+    const p=parseFloat(r.querySelector('[name="item_price[]"]').value)||0;
+    const t=q*p; sub+=t;
+    r.querySelector('.row-total').textContent=t.toLocaleString('tr-TR',{minimumFractionDigits:2})+' ₺';
+  });
+  document.getElementById('ft-sub').textContent=sub.toLocaleString('tr-TR',{minimumFractionDigits:2})+' ₺';
+}
+document.querySelectorAll('.calc').forEach(i=>i.addEventListener('input',calcTotals));
+calcTotals();
+<% if (!items.length) { %>addRow();<% } %>
+</script>
+
+<%- include('layout-end') %>

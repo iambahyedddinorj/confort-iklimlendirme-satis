@@ -1,0 +1,52 @@
+<% const page='sales'; const title='Satışlar'; %>
+<%- include('layout') %>
+
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+  <form method="GET" class="flex gap-2 w-full sm:w-auto">
+    <input name="q" value="<%= search %>" placeholder="Seri no, ürün veya müşteri ara..." class="bg-surface border border-border rounded-lg px-4 py-2 text-white focus:border-red focus:outline-none flex-grow sm:w-72">
+    <button class="bg-red text-white px-4 py-2 rounded-lg">Ara</button>
+  </form>
+  <a href="/satis/yeni" class="bg-red hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors whitespace-nowrap">
+    <span class="material-symbols-outlined text-[18px]">add</span> Yeni Satış
+  </a>
+</div>
+
+<div class="bg-surface border border-border rounded-xl overflow-hidden">
+  <% if (sales.length) { %>
+  <div class="overflow-x-auto">
+    <table class="w-full text-left text-sm">
+      <thead><tr class="text-muted border-b border-border bg-bg/50">
+        <th class="py-3 px-4">Müşteri</th>
+        <th class="py-3 px-4">Ürün</th>
+        <th class="py-3 px-4 hidden md:table-cell">İç Ünite Seri</th>
+        <th class="py-3 px-4 hidden md:table-cell">Dış Ünite Seri</th>
+        <th class="py-3 px-4">Tarih</th>
+        <th class="py-3 px-4 text-right">Tutar</th>
+        <th class="py-3 px-4 text-center">Durum</th>
+        <th class="py-3 px-4 text-right">İşlem</th>
+      </tr></thead>
+      <tbody>
+        <% sales.forEach(s => { %>
+        <tr class="border-b border-border/30 hover:bg-white/5 cursor-pointer" onclick="location.href='/satis/<%= s.id %>'">
+          <td class="py-3 px-4 text-red font-medium"><%= s.customer_name %></td>
+          <td class="py-3 px-4"><%= s.product_name %></td>
+          <td class="py-3 px-4 text-muted hidden md:table-cell font-mono text-xs"><%= s.ic_unite_seri || '-' %></td>
+          <td class="py-3 px-4 text-muted hidden md:table-cell font-mono text-xs"><%= s.dis_unite_seri || '-' %></td>
+          <td class="py-3 px-4 text-muted"><%= s.sale_date %></td>
+          <td class="py-3 px-4 text-right font-bold"><%= money(s.price) %></td>
+          <td class="py-3 px-4 text-center"><span class="px-2 py-1 rounded-full text-xs font-bold <%= (s.payment_status||'Ödendi')==='Ödendi'?'bg-green-900/50 text-green-400': s.payment_status==='Kısmi Ödeme'?'bg-yellow-900/50 text-yellow-400':'bg-red-900/50 text-red-400' %>"><%= s.payment_status || 'Ödendi' %></span></td>
+          <td class="py-3 px-4 text-right whitespace-nowrap" onclick="event.stopPropagation()">
+            <a href="/satis/duzenle/<%= s.id %>" class="text-muted hover:text-red"><span class="material-symbols-outlined text-[18px]">edit</span></a>
+            <form method="POST" action="/satis/sil" class="inline" onsubmit="return confirm('Bu satış kaydını silmek istediğinden emin misin?')"><input type="hidden" name="id" value="<%= s.id %>"><button class="text-muted hover:text-red ml-2"><span class="material-symbols-outlined text-[18px]">delete</span></button></form>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <% } else { %>
+  <p class="text-muted text-center py-12"><%= search ? 'Sonuç bulunamadı.' : 'Henüz satış kaydı yok.' %></p>
+  <% } %>
+</div>
+
+<%- include('layout-end') %>

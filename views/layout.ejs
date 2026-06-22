@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title!=='undefined'?title:'Satış Takip' %> — Confort İklimlendirme</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL@20..48,100..700,0..1" rel="stylesheet">
+  <script>tailwind.config={theme:{extend:{colors:{bg:'#0a0a0a',surface:'#141414',border:'#262626',red:'#DC2626',redLight:'#FCA5A5',redDark:'#991B1B',text:'#F3F4F6',muted:'#9CA3AF'}}}}</script>
+  <style>
+    body { background: #0a0a0a; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    .icon-fill { font-variation-settings: 'FILL' 1; }
+  </style>
+</head>
+<body class="bg-bg text-text min-h-screen flex">
+<% if (user) { %>
+<aside class="hidden md:flex flex-col w-60 bg-surface border-r border-border fixed h-full z-40">
+  <div class="px-5 py-5 border-b border-border">
+    <div class="flex items-center gap-2">
+      <span class="material-symbols-outlined text-red icon-fill text-2xl">ac_unit</span>
+      <div>
+        <span class="font-bold text-red text-lg block leading-none">Confort</span>
+        <span class="text-[10px] text-muted">Satış Takip</span>
+      </div>
+    </div>
+  </div>
+  <nav class="flex-grow px-3 py-4 space-y-1">
+    <a href="/" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors <%= typeof page!=='undefined'&&page==='dash'?'bg-red/10 text-red font-bold':'text-muted hover:bg-white/5' %>">
+      <span class="material-symbols-outlined text-[20px]">dashboard</span><span>Ana Sayfa</span>
+    </a>
+    <a href="/musteriler" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors <%= typeof page!=='undefined'&&page==='customers'?'bg-red/10 text-red font-bold':'text-muted hover:bg-white/5' %>">
+      <span class="material-symbols-outlined text-[20px]">group</span><span>Müşteriler</span>
+    </a>
+    <a href="/satislar" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors <%= typeof page!=='undefined'&&page==='sales'?'bg-red/10 text-red font-bold':'text-muted hover:bg-white/5' %>">
+      <span class="material-symbols-outlined text-[20px]">receipt_long</span><span>Satışlar</span>
+    </a>
+    <a href="/teklifler" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors <%= typeof page!=='undefined'&&page==='quotes'?'bg-red/10 text-red font-bold':'text-muted hover:bg-white/5' %>">
+      <span class="material-symbols-outlined text-[20px]">description</span><span>Teklifler</span>
+    </a>
+    <a href="/stok" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors <%= typeof page!=='undefined'&&page==='stock'?'bg-red/10 text-red font-bold':'text-muted hover:bg-white/5' %>">
+      <span class="material-symbols-outlined text-[20px]">inventory_2</span><span>Stok</span>
+    </a>
+    <a href="/raporlar" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors <%= typeof page!=='undefined'&&page==='reports'?'bg-red/10 text-red font-bold':'text-muted hover:bg-white/5' %>">
+      <span class="material-symbols-outlined text-[20px]">bar_chart</span><span>Raporlar</span>
+    </a>
+    <div class="mt-4 pt-3 border-t border-border/50">
+      <a href="/ayarlar" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors <%= typeof page!=='undefined'&&page==='settings'?'bg-red/10 text-red font-bold':'text-muted hover:bg-white/5' %>">
+        <span class="material-symbols-outlined text-[20px]">settings</span><span>Ayarlar</span>
+      </a>
+    </div>
+  </nav>
+  <div class="px-3 py-4 border-t border-border">
+    <a href="/cikis" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-red/70 hover:bg-red/10 transition-colors">
+      <span class="material-symbols-outlined text-[20px]">logout</span><span>Çıkış</span>
+    </a>
+  </div>
+</aside>
+<div class="flex-grow md:ml-60 min-w-0">
+  <header class="bg-bg/80 backdrop-blur border-b border-border sticky top-0 z-30 px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <button class="md:hidden text-text" onclick="document.getElementById('mob').classList.toggle('hidden')"><span class="material-symbols-outlined">menu</span></button>
+      <h1 class="text-xl font-bold text-red"><%= typeof title!=='undefined'?title:'' %></h1>
+    </div>
+    <span class="text-muted text-sm"><%= user.name %></span>
+  </header>
+  <div id="mob" class="md:hidden hidden bg-surface border-b border-border px-3 py-3">
+    <a href="/" class="flex items-center gap-3 px-3 py-2 rounded-lg text-muted">🏠 Ana Sayfa</a>
+    <a href="/musteriler" class="flex items-center gap-3 px-3 py-2 rounded-lg text-muted">👥 Müşteriler</a>
+    <a href="/satislar" class="flex items-center gap-3 px-3 py-2 rounded-lg text-muted">🧾 Satışlar</a>
+    <a href="/teklifler" class="flex items-center gap-3 px-3 py-2 rounded-lg text-muted">📋 Teklifler</a>
+    <a href="/stok" class="flex items-center gap-3 px-3 py-2 rounded-lg text-muted">📦 Stok</a>
+    <a href="/raporlar" class="flex items-center gap-3 px-3 py-2 rounded-lg text-muted">📊 Raporlar</a>
+    <a href="/ayarlar" class="flex items-center gap-3 px-3 py-2 rounded-lg text-muted">⚙️ Ayarlar</a>
+  </div>
+  <% if (flash) { %>
+  <div class="mx-6 mt-4 px-4 py-3 rounded-lg border <%= flash.type==='error'?'bg-red-900/30 border-red-800 text-redLight':'bg-green-900/30 border-green-800 text-green-300' %>" id="fl">
+    <%= flash.msg %>
+  </div>
+  <script>setTimeout(()=>{var f=document.getElementById('fl');if(f){f.style.transition='opacity .4s';f.style.opacity='0';setTimeout(()=>f.remove(),400);}},3000);</script>
+  <% } %>
+  <div class="p-6">
+<% } %>

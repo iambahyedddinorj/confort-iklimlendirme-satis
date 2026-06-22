@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Belge Düzenleyici — Teklif #<%= quote.id %></title>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL@20..48,100..700,0..1" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Segoe UI',Tahoma,sans-serif; background:#1a1a1a; color:#f3f4f6; }
+
+    /* Toolbar */
+    .toolbar { position:fixed; top:0; left:0; right:0; z-index:50; background:#0a0a0a; border-bottom:2px solid #DC2626; padding:10px 20px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .toolbar h2 { color:#DC2626; font-size:16px; display:flex; align-items:center; gap:8px; }
+    .toolbar .actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .toolbar .actions a, .toolbar .actions button { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; text-decoration:none; border:1px solid #333; color:#ccc; background:#1a1a1a; transition:all .2s; }
+    .toolbar .actions a:hover, .toolbar .actions button:hover { border-color:#DC2626; color:#fff; }
+    .btn-red { background:#DC2626 !important; color:white !important; border-color:#DC2626 !important; }
+    .btn-red:hover { background:#b91c1c !important; }
+    .btn-green { border-color:#16a34a !important; color:#16a34a !important; }
+    .btn-green:hover { background:#16a34a !important; color:#fff !important; }
+    .btn-blue { border-color:#2563eb !important; color:#2563eb !important; }
+    .btn-blue:hover { background:#2563eb !important; color:#fff !important; }
+
+    /* Document */
+    .doc-wrapper { margin-top:70px; padding:30px; display:flex; justify-content:center; }
+    .document { background:white; color:#1a1a1a; width:210mm; min-height:297mm; padding:40px; box-shadow:0 4px 40px rgba(0,0,0,.5); position:relative; }
+
+    /* Editable */
+    [contenteditable] { outline:none; border:1px dashed transparent; border-radius:3px; padding:1px 3px; min-width:20px; transition:border-color .2s; }
+    [contenteditable]:hover { border-color:#DC262666; }
+    [contenteditable]:focus { border-color:#DC2626; background:#fff8f8; }
+    .edit-input { border:none; outline:none; background:transparent; font:inherit; color:inherit; width:100%; text-align:inherit; padding:0; }
+    .edit-input:focus { background:#fff8f8; border-bottom:2px solid #DC2626; }
+    .edit-input[type=number] { -moz-appearance:textfield; }
+    .edit-input[type=number]::-webkit-inner-spin-button { -webkit-appearance:none; }
+
+    /* Doc Styles */
+    .header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:30px; padding-bottom:20px; border-bottom:3px solid #DC2626; }
+    .logo { font-size:28px; font-weight:900; color:#DC2626; }
+    .logo small { display:block; font-size:11px; color:#666; font-weight:400; }
+    .company-info { text-align:right; font-size:11px; color:#666; line-height:1.6; }
+    .doc-title { text-align:center; margin-bottom:25px; }
+    .doc-title h1 { font-size:22px; color:#DC2626; margin-bottom:3px; }
+    .doc-title p { color:#666; font-size:12px; }
+    .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:25px; }
+    .info-box { background:#f8f8f8; border-radius:8px; padding:15px; }
+    .info-box h4 { font-size:11px; color:#DC2626; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
+    .info-box p { font-size:12px; line-height:1.8; color:#333; }
+    table.items { width:100%; border-collapse:collapse; margin-bottom:20px; }
+    table.items thead th { background:#DC2626; color:white; padding:10px 12px; text-align:left; font-size:11px; text-transform:uppercase; }
+    table.items thead th:first-child { border-radius:6px 0 0 0; }
+    table.items thead th:last-child { border-radius:0 6px 0 0; }
+    table.items tbody td { padding:8px 10px; border-bottom:1px solid #eee; font-size:13px; }
+    table.items tbody tr:nth-child(even) { background:#fafafa; }
+    .text-right { text-align:right; }
+    .text-center { text-align:center; }
+    table.totals { width:300px; margin-left:auto; }
+    table.totals td { padding:8px 12px; }
+    table.totals tr:last-child { background:#DC2626; color:white; font-weight:bold; font-size:16px; border-radius:6px; }
+    table.totals tr:last-child td { padding:12px; }
+    .notes-box { background:#f8f8f8; border-radius:8px; padding:15px; margin-top:20px; }
+    .notes-box h4 { font-size:11px; color:#DC2626; text-transform:uppercase; letter-spacing:1px; margin-bottom:5px; }
+    .sig-grid { margin-top:40px; padding-top:20px; border-top:1px solid #ddd; display:grid; grid-template-columns:1fr 1fr; gap:40px; }
+    .sig-box { text-align:center; }
+    .sig-box .line { border-top:1px solid #999; margin-top:60px; padding-top:5px; font-size:11px; color:#666; }
+    .stamp { text-align:center; font-size:10px; color:#999; margin-top:30px; }
+
+    /* Row actions */
+    .row-actions { opacity:0; transition:opacity .2s; display:flex; gap:2px; }
+    tr:hover .row-actions { opacity:1; }
+    .row-actions button { background:none; border:none; cursor:pointer; padding:2px; border-radius:4px; }
+    .row-actions button:hover { background:#fee; }
+    .row-actions .material-symbols-outlined { font-size:16px; color:#DC2626; }
+    .add-row-btn { background:none; border:2px dashed #ddd; color:#999; padding:8px; text-align:center; cursor:pointer; border-radius:6px; width:100%; margin-top:5px; font-size:12px; display:flex; align-items:center; justify-content:center; gap:4px; transition:all .2s; }
+    .add-row-btn:hover { border-color:#DC2626; color:#DC2626; }
+
+    /* Status indicator */
+    .save-status { font-size:12px; color:#666; display:flex; align-items:center; gap:4px; }
+    .save-status.saving { color:#f59e0b; }
+    .save-status.saved { color:#16a34a; }
+    .save-status.error { color:#DC2626; }
+
+    @media print {
+      .toolbar, .add-row-btn, .row-actions { display:none !important; }
+      .doc-wrapper { margin-top:0; padding:0; }
+      .document { box-shadow:none; width:100%; padding:20px; }
+      [contenteditable] { border:none !important; }
+      body { background:white; }
+      @page { margin:15mm; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="toolbar">
+  <h2><span class="material-symbols-outlined" style="font-size:20px">edit_document</span> Belge Düzenleyici — Teklif #<%= quote.id %></h2>
+  <div id="save-status" class="save-status">
+    <span class="material-symbols-outlined" style="font-size:16px">check_circle</span> Kaydedildi
+  </div>
+  <div class="actions">
+    <button onclick="saveDoc()" class="btn-red"><span class="material-symbols-outlined" style="font-size:16px">save</span> Kaydet</button>
+    <button onclick="window.print()"><span class="material-symbols-outlined" style="font-size:16px">print</span> Yazdır / PDF</button>
+    <a href="/teklif/<%= quote.id %>/excel" class="btn-green"><span class="material-symbols-outlined" style="font-size:16px">table_view</span> Excel</a>
+    <a href="/teklif/<%= quote.id %>/word" class="btn-blue"><span class="material-symbols-outlined" style="font-size:16px">article</span> Word</a>
+    <a href="/teklif/<%= quote.id %>"><span class="material-symbols-outlined" style="font-size:16px">arrow_back</span> Geri</a>
+  </div>
+</div>
+
+<div class="doc-wrapper">
+  <div class="document" id="doc">
+    <div class="header">
+      <div>
+        <div class="logo" contenteditable="true" data-field="company_name"><%= settings.company_name || 'CONFORT İKLİMLENDİRME' %><small contenteditable="true" data-field="company_subtitle"><%= settings.company_subtitle || '' %></small></div>
+      </div>
+      <div class="company-info">
+        <span contenteditable="true" data-field="owner_name"><%= settings.owner_name || '' %></span><br>
+        <span contenteditable="true" data-field="address"><%= settings.address || '' %></span><br>
+        Tel: <span contenteditable="true" data-field="phone"><%= settings.phone || '' %></span><br>
+        <span contenteditable="true" data-field="website"><%= settings.website || '' %></span>
+      </div>
+    </div>
+
+    <div class="doc-title">
+      <h1>TEKLİF FORMU</h1>
+      <p>Teklif No: #<%= quote.id %> &nbsp;|&nbsp; Tarih: <input class="edit-input" type="date" value="<%= quote.quote_date %>" data-field="quote_date" style="width:130px;font-size:12px;color:#666"> &nbsp;|&nbsp; Geçerlilik: <input class="edit-input" type="date" value="<%= quote.valid_until || '' %>" data-field="valid_until" style="width:130px;font-size:12px;color:#666"></p>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-box">
+        <h4>Müşteri Bilgileri</h4>
+        <p>
+          <strong contenteditable="true" data-field="customer_name"><%= quote.customer_name || '' %></strong><br>
+          Tel: <span contenteditable="true" data-field="customer_phone"><%= quote.customer_phone || '' %></span><br>
+          Adres: <span contenteditable="true" data-field="customer_address"><%= quote.customer_address || '' %></span>
+        </p>
+      </div>
+      <div class="info-box">
+        <h4>Teklif Bilgileri</h4>
+        <p>
+          <strong>Durum:</strong>
+          <select data-field="status" class="edit-input" style="width:auto;font-size:12px">
+            <% ['Taslak','Gönderildi','Onaylandı','Reddedildi'].forEach(s => { %>
+            <option value="<%= s %>" <%= quote.status===s?'selected':'' %>><%= s %></option>
+            <% }) %>
+          </select><br>
+          <strong>KDV Oranı:</strong> %<input class="edit-input" type="number" value="<%= quote.tax_rate %>" data-field="tax_rate" style="width:40px;font-size:12px" id="tax-rate"><br>
+          <strong>İndirim:</strong>
+          <select data-field="discount_type" class="edit-input" style="width:auto;font-size:12px" id="disc-type">
+            <option value="percent" <%= quote.discount_type==='percent'?'selected':'' %>>%</option>
+            <option value="amount" <%= quote.discount_type==='amount'?'selected':'' %>>₺</option>
+          </select>
+          <input class="edit-input" type="number" value="<%= quote.discount_value || 0 %>" data-field="discount_value" style="width:50px;font-size:12px" id="disc-value">
+        </p>
+      </div>
+    </div>
+
+    <table class="items" id="items-table">
+      <thead>
+        <tr>
+          <th style="width:30px">#</th>
+          <th>Ürün / Hizmet</th>
+          <th>Açıklama</th>
+          <th class="text-center" style="width:65px">Miktar</th>
+          <th class="text-center" style="width:55px">Birim</th>
+          <th class="text-right" style="width:100px">Birim Fiyat</th>
+          <th class="text-right" style="width:100px">Toplam</th>
+          <th style="width:40px"></th>
+        </tr>
+      </thead>
+      <tbody id="items-body">
+        <% items.forEach((item, i) => { %>
+        <tr data-item-id="<%= item.id %>">
+          <td class="item-no"><%= i+1 %></td>
+          <td><input class="edit-input item-name" value="<%= item.product_name %>" style="font-weight:bold" placeholder="Ürün adı"></td>
+          <td><input class="edit-input item-desc" value="<%= item.description || '' %>" style="color:#666" placeholder="Açıklama"></td>
+          <td class="text-center"><input class="edit-input item-qty calc" type="number" step="0.01" value="<%= item.quantity %>" style="text-align:center;width:50px" min="0"></td>
+          <td class="text-center"><input class="edit-input item-unit" value="<%= item.unit %>" style="text-align:center;width:50px" placeholder="Adet"></td>
+          <td class="text-right"><input class="edit-input item-price calc" type="number" step="0.01" value="<%= item.unit_price %>" style="text-align:right;width:80px" min="0"></td>
+          <td class="text-right item-total" style="font-weight:bold"><%= (item.quantity * item.unit_price).toLocaleString('tr-TR', {minimumFractionDigits:2}) %> ₺</td>
+          <td>
+            <div class="row-actions">
+              <button onclick="removeRow(this)" title="Sil"><span class="material-symbols-outlined">close</span></button>
+            </div>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+
+    <button class="add-row-btn" onclick="addRow()">
+      <span class="material-symbols-outlined" style="font-size:18px">add_circle</span> Yeni Kalem Ekle
+    </button>
+
+    <table class="totals" style="margin-top:20px">
+      <tr><td class="text-right" style="color:#666">Ara Toplam:</td><td class="text-right" id="ft-sub">0 ₺</td></tr>
+      <tr id="ft-disc-row" style="display:none"><td class="text-right" style="color:#666">İndirim:</td><td class="text-right" style="color:#16a34a" id="ft-disc">0 ₺</td></tr>
+      <tr><td class="text-right" style="color:#666" id="ft-tax-label">KDV (%20):</td><td class="text-right" id="ft-tax">0 ₺</td></tr>
+      <tr><td class="text-right">GENEL TOPLAM</td><td class="text-right" id="ft-total">0 ₺</td></tr>
+    </table>
+
+    <div class="notes-box">
+      <h4>Notlar</h4>
+      <div contenteditable="true" data-field="notes" style="font-size:12px;color:#333;min-height:30px"><%= quote.notes || '' %></div>
+    </div>
+
+    <div class="sig-grid">
+      <div class="sig-box"><div class="line">Müşteri İmza / Kaşe</div></div>
+      <div class="sig-box"><div class="line">Yetkili İmza / Kaşe</div></div>
+    </div>
+    <div class="stamp">Bu teklif bilgisayar ortamında hazırlanmıştır. — Confort İklimlendirme Satış Takip Sistemi</div>
+  </div>
+</div>
+
+<script>
+const quoteId = <%= quote.id %>;
+const money = n => Number(n||0).toLocaleString('tr-TR',{minimumFractionDigits:2})+' ₺';
+
+function calcTotals(){
+  let sub = 0;
+  document.querySelectorAll('#items-body tr').forEach((tr,i) => {
+    tr.querySelector('.item-no').textContent = i+1;
+    const q = parseFloat(tr.querySelector('.item-qty').value)||0;
+    const p = parseFloat(tr.querySelector('.item-price').value)||0;
+    const t = q*p;
+    sub += t;
+    tr.querySelector('.item-total').textContent = money(t);
+  });
+  const taxRate = parseFloat(document.getElementById('tax-rate').value)||0;
+  const discType = document.getElementById('disc-type').value;
+  const discVal = parseFloat(document.getElementById('disc-value').value)||0;
+  let disc = discType==='percent' ? sub*discVal/100 : discVal;
+  const afterDisc = sub - disc;
+  const tax = afterDisc * taxRate/100;
+  const total = afterDisc + tax;
+
+  document.getElementById('ft-sub').textContent = money(sub);
+  if(disc > 0){
+    document.getElementById('ft-disc-row').style.display = '';
+    document.getElementById('ft-disc').textContent = '-'+money(disc);
+  } else {
+    document.getElementById('ft-disc-row').style.display = 'none';
+  }
+  document.getElementById('ft-tax-label').textContent = 'KDV (%'+taxRate+'):';
+  document.getElementById('ft-tax').textContent = money(tax);
+  document.getElementById('ft-total').textContent = money(total);
+}
+
+function addRow(){
+  const tbody = document.getElementById('items-body');
+  const n = tbody.children.length + 1;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td class="item-no">${n}</td>
+    <td><input class="edit-input item-name" value="" style="font-weight:bold" placeholder="Ürün adı"></td>
+    <td><input class="edit-input item-desc" value="" style="color:#666" placeholder="Açıklama"></td>
+    <td class="text-center"><input class="edit-input item-qty calc" type="number" step="0.01" value="1" style="text-align:center;width:50px" min="0"></td>
+    <td class="text-center"><input class="edit-input item-unit" value="Adet" style="text-align:center;width:50px"></td>
+    <td class="text-right"><input class="edit-input item-price calc" type="number" step="0.01" value="0" style="text-align:right;width:80px" min="0"></td>
+    <td class="text-right item-total" style="font-weight:bold">0,00 ₺</td>
+    <td><div class="row-actions" style="opacity:1"><button onclick="removeRow(this)" title="Sil"><span class="material-symbols-outlined">close</span></button></div></td>
+  `;
+  tbody.appendChild(tr);
+  tr.querySelectorAll('.calc').forEach(el => el.addEventListener('input', calcTotals));
+  tr.querySelector('.item-name').focus();
+  calcTotals();
+}
+
+function removeRow(btn){
+  btn.closest('tr').remove();
+  calcTotals();
+}
+
+function setStatus(text, cls){
+  const el = document.getElementById('save-status');
+  el.className = 'save-status '+cls;
+  el.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px">'+(cls==='saved'?'check_circle':cls==='saving'?'sync':'error')+'</span> '+text;
+}
+
+async function saveDoc(){
+  setStatus('Kaydediliyor...','saving');
+  const items = [];
+  document.querySelectorAll('#items-body tr').forEach(tr => {
+    const name = tr.querySelector('.item-name')?.value;
+    if(!name) return;
+    items.push({
+      product_name: name,
+      description: tr.querySelector('.item-desc')?.value||'',
+      quantity: parseFloat(tr.querySelector('.item-qty')?.value)||1,
+      unit: tr.querySelector('.item-unit')?.value||'Adet',
+      unit_price: parseFloat(tr.querySelector('.item-price')?.value)||0,
+    });
+  });
+
+  const getField = (f) => {
+    const el = document.querySelector('[data-field="'+f+'"]');
+    if(!el) return '';
+    if(el.tagName==='INPUT'||el.tagName==='SELECT') return el.value;
+    return el.textContent.trim();
+  };
+
+  const data = {
+    id: quoteId,
+    customer_name: getField('customer_name'),
+    customer_phone: getField('customer_phone'),
+    customer_address: getField('customer_address'),
+    quote_date: getField('quote_date'),
+    valid_until: getField('valid_until'),
+    status: getField('status'),
+    discount_type: getField('discount_type'),
+    discount_value: getField('discount_value'),
+    tax_rate: getField('tax_rate'),
+    notes: getField('notes'),
+    items: items,
+    // Settings
+    settings: {
+      company_name: getField('company_name'),
+      company_subtitle: getField('company_subtitle'),
+      owner_name: getField('owner_name'),
+      address: getField('address'),
+      phone: getField('phone'),
+      website: getField('website'),
+    }
+  };
+
+  try {
+    const res = await fetch('/api/teklif/kaydet', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+    const result = await res.json();
+    if(result.ok) setStatus('Kaydedildi','saved');
+    else setStatus('Hata: '+result.msg,'error');
+  } catch(e) {
+    setStatus('Bağlantı hatası','error');
+  }
+}
+
+// Auto-calc on input
+document.querySelectorAll('.calc').forEach(el => el.addEventListener('input', calcTotals));
+document.getElementById('tax-rate').addEventListener('input', calcTotals);
+document.getElementById('disc-type').addEventListener('change', calcTotals);
+document.getElementById('disc-value').addEventListener('input', calcTotals);
+
+calcTotals();
+</script>
+</body>
+</html>

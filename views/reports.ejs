@@ -1,0 +1,133 @@
+<%- include('layout') %>
+
+<div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+  <div class="bg-surface border border-border rounded-xl p-5">
+    <span class="text-muted text-sm">Toplam Ciro</span>
+    <p class="text-2xl font-bold text-green-400 mt-1"><%= money(totalRevenue) %></p>
+  </div>
+  <div class="bg-surface border border-border rounded-xl p-5">
+    <span class="text-muted text-sm">Tahsil Edilen</span>
+    <p class="text-2xl font-bold text-green-400 mt-1"><%= money(totalCollected) %></p>
+  </div>
+  <div class="bg-surface border border-border rounded-xl p-5">
+    <span class="text-muted text-sm">Toplam Alacak</span>
+    <p class="text-2xl font-bold <%= totalDebt > 0 ? 'text-red' : 'text-green-400' %> mt-1"><%= money(totalDebt) %></p>
+  </div>
+  <div class="bg-surface border border-border rounded-xl p-5">
+    <span class="text-muted text-sm">Tahsilat Oranı</span>
+    <p class="text-2xl font-bold text-yellow-400 mt-1"><%= totalRevenue > 0 ? Math.round(totalCollected/totalRevenue*100) : 100 %>%</p>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+  <div class="bg-surface border border-border rounded-xl p-5">
+    <h2 class="text-lg font-bold text-red mb-4">Aylık Ciro</h2>
+    <% if (monthlySales.length) { %>
+    <div class="flex items-end gap-2 h-44">
+      <% const maxS = Math.max(...monthlySales.map(m=>m.total),1); %>
+      <% monthlySales.forEach(m => { const h = Math.round(m.total/maxS*100); %>
+      <div class="flex-grow flex flex-col items-center gap-1 group">
+        <div class="w-full rounded-t transition-colors relative" style="height:<%= Math.max(h,4) %>%">
+          <div class="absolute inset-0 bg-green-600/40 rounded-t" style="height:100%"></div>
+          <div class="absolute bottom-0 left-0 right-0 bg-red/40 rounded-t" style="height:<%= m.total > 0 ? Math.round((m.total - m.paid)/m.total*100) : 0 %>%"></div>
+          <span class="absolute -top-6 left-1/2 -translate-x-1/2 text-[9px] text-muted opacity-0 group-hover:opacity-100 whitespace-nowrap"><%= money(m.total) %></span>
+        </div>
+        <span class="text-[10px] text-muted"><%= m.m.slice(5) %>/<%= m.m.slice(2,4) %></span>
+        <span class="text-[10px] text-muted"><%= m.c %> adet</span>
+      </div>
+      <% }) %>
+    </div>
+    <div class="flex items-center gap-4 mt-3 text-[10px] text-muted">
+      <span class="flex items-center gap-1"><span class="w-3 h-3 bg-green-600/40 rounded"></span> Tahsil</span>
+      <span class="flex items-center gap-1"><span class="w-3 h-3 bg-red/40 rounded"></span> Alacak</span>
+    </div>
+    <% } else { %>
+    <p class="text-muted text-center py-8">Veri yok.</p>
+    <% } %>
+  </div>
+
+  <div class="bg-surface border border-border rounded-xl p-5">
+    <h2 class="text-lg font-bold text-red mb-4">Ödeme Yöntemleri</h2>
+    <% if (paymentMethods.length) { %>
+    <div class="space-y-3">
+      <% const pmMax = Math.max(...paymentMethods.map(p=>p.total),1); %>
+      <% paymentMethods.forEach(p => { %>
+      <div>
+        <div class="flex justify-between text-sm mb-1">
+          <span><%= p.payment_method %> <span class="text-muted">(<%= p.c %>)</span></span>
+          <span class="font-bold"><%= money(p.total) %></span>
+        </div>
+        <div class="w-full bg-bg rounded-full h-2"><div class="bg-red/60 h-2 rounded-full" style="width:<%= Math.round(p.total/pmMax*100) %>%"></div></div>
+      </div>
+      <% }) %>
+    </div>
+    <% } %>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+  <div class="bg-surface border border-border rounded-xl p-5">
+    <h2 class="text-lg font-bold text-red mb-4">En Çok Satan Ürünler</h2>
+    <% if (topProducts.length) { %>
+    <table class="w-full text-left text-sm">
+      <thead><tr class="text-muted border-b border-border"><th class="py-2 pr-3">#</th><th class="py-2 pr-3">Ürün</th><th class="py-2 text-center">Adet</th><th class="py-2 text-right">Ciro</th></tr></thead>
+      <tbody>
+        <% topProducts.forEach((p, i) => { %>
+        <tr class="border-b border-border/30">
+          <td class="py-2 pr-3 text-muted"><%= i+1 %></td>
+          <td class="py-2 pr-3 font-bold"><%= p.product_name %></td>
+          <td class="py-2 text-center"><%= p.c %></td>
+          <td class="py-2 text-right text-green-400 font-bold"><%= money(p.total) %></td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+    <% } else { %><p class="text-muted text-center py-4">Veri yok.</p><% } %>
+  </div>
+
+  <div class="bg-surface border border-border rounded-xl p-5">
+    <h2 class="text-lg font-bold text-red mb-4">En Çok Harcayan Müşteriler</h2>
+    <% if (topCustomers.length) { %>
+    <table class="w-full text-left text-sm">
+      <thead><tr class="text-muted border-b border-border"><th class="py-2 pr-3">#</th><th class="py-2 pr-3">Müşteri</th><th class="py-2 text-center">Satış</th><th class="py-2 text-right">Toplam</th><th class="py-2 text-right">Borç</th></tr></thead>
+      <tbody>
+        <% topCustomers.forEach((c, i) => { %>
+        <tr class="border-b border-border/30">
+          <td class="py-2 pr-3 text-muted"><%= i+1 %></td>
+          <td class="py-2 pr-3"><span class="font-bold"><%= c.name %></span><% if (c.phone) { %><br><span class="text-muted text-xs"><%= c.phone %></span><% } %></td>
+          <td class="py-2 text-center"><%= c.sale_count %></td>
+          <td class="py-2 text-right text-green-400 font-bold"><%= money(c.total) %></td>
+          <td class="py-2 text-right <%= c.debt > 0 ? 'text-red font-bold' : 'text-muted' %>"><%= c.debt > 0 ? money(c.debt) : '-' %></td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+    <% } else { %><p class="text-muted text-center py-4">Veri yok.</p><% } %>
+  </div>
+</div>
+
+<% if (unpaidSales.length) { %>
+<div class="bg-surface border border-border rounded-xl p-5">
+  <h2 class="text-lg font-bold text-red mb-4 flex items-center gap-2"><span class="material-symbols-outlined">warning</span> Ödenmemiş / Kısmi Ödemeler</h2>
+  <div class="overflow-x-auto">
+    <table class="w-full text-left text-sm">
+      <thead><tr class="text-muted border-b border-border"><th class="py-2 pr-3">Müşteri</th><th class="py-2 pr-3">Ürün</th><th class="py-2 pr-3">Tarih</th><th class="py-2 text-right pr-3">Tutar</th><th class="py-2 text-right pr-3">Ödenen</th><th class="py-2 text-right pr-3">Kalan</th><th class="py-2">Durum</th></tr></thead>
+      <tbody>
+        <% unpaidSales.forEach(s => { %>
+        <tr class="border-b border-border/30 hover:bg-white/5">
+          <td class="py-3 pr-3"><a href="/musteri/<%= s.customer_id %>" class="text-red hover:underline"><%= s.customer_name %></a><% if (s.customer_phone) { %><br><span class="text-muted text-xs"><%= s.customer_phone %></span><% } %></td>
+          <td class="py-3 pr-3"><a href="/satis/<%= s.id %>" class="hover:text-red"><%= s.product_name %></a></td>
+          <td class="py-3 pr-3 text-muted"><%= s.sale_date %></td>
+          <td class="py-3 pr-3 text-right"><%= money(s.price) %></td>
+          <td class="py-3 pr-3 text-right text-green-400"><%= money(s.paid_amount) %></td>
+          <td class="py-3 pr-3 text-right text-red font-bold"><%= money(s.price - s.paid_amount) %></td>
+          <td class="py-3"><span class="px-2 py-1 rounded-full text-xs font-bold <%= s.payment_status==='Kısmi Ödeme'?'bg-yellow-900/50 text-yellow-400':'bg-red-900/50 text-red-400' %>"><%= s.payment_status %></span></td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<% } %>
+
+<%- include('layout-end') %>
