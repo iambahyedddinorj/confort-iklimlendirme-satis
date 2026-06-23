@@ -115,10 +115,10 @@ db.exec(`
 const defaultSettings = {
   company_name: 'CONFORT İKLİMLENDİRME',
   company_subtitle: 'İklimlendirme Sistemleri — Satış, Montaj & Servis',
-  owner_name: 'Akyüz İklimlendirme',
-  address: 'Haliliye / Şanlıurfa',
-  phone: '+90 542 575 70 98',
-  website: 'www.akyüziklimlendirme.com.tr',
+  owner_name: 'Confort İklimlendirme',
+  address: '',
+  phone: '',
+  website: '',
   tax_id: '',
   default_tax_rate: '20',
   default_valid_days: '3',
@@ -157,7 +157,7 @@ const q = {
 };
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -535,7 +535,7 @@ app.get('/teklif/:id/excel', auth, async (req, res) => {
   const wb = new ExcelJS.Workbook();
   wb.creator = settings.company_name || 'Confort İklimlendirme';
   const ws = wb.addWorksheet('Teklif');
-  const red = 'FFDC2626';
+  const red = 'FF2563EB';
   const gray = 'FFF8F8F8';
   const darkGray = 'FF666666';
   const white = 'FFFFFFFF';
@@ -829,7 +829,7 @@ app.get('/teklif/:id/word', auth, async (req, res) => {
 
   const { Document, Paragraph, Table, TableRow, TableCell, TextRun, WidthType, AlignmentType, BorderStyle, HeadingLevel, ShadingType } = docx;
 
-  const redColor = 'DC2626';
+  const redColor = '2563EB';
   const grayBg = 'F8F8F8';
 
   // Column widths in DXA — A4 content width = 9026 DXA (11906 - 1440*2)

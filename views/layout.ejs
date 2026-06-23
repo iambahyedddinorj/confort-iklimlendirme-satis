@@ -6,24 +6,35 @@
   <title><%= typeof title!=='undefined'?title:'Satış Takip' %> — Confort İklimlendirme</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL@20..48,100..700,0..1" rel="stylesheet">
-  <script>tailwind.config={theme:{extend:{colors:{bg:'#0a0a0a',surface:'#141414',border:'#262626',red:'#DC2626',redLight:'#FCA5A5',redDark:'#991B1B',text:'#F3F4F6',muted:'#9CA3AF'}}}}</script>
+  <script>tailwind.config={theme:{extend:{colors:{bg:'#EEF3F9',surface:'#FFFFFF',border:'#D8E1EC',red:'#2563EB',redLight:'#60A5FA',redDark:'#1D4ED8',text:'#0F172A',muted:'#64748B'}}}}</script>
   <style>
-    body { background: #0a0a0a; }
+    body { background: #EEF3F9; }
     .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
     .icon-fill { font-variation-settings: 'FILL' 1; }
+    /* Açık tema: form alanlarında koyu yazı (specificity .text-white'ı geçer) */
+    input.text-white, select.text-white, textarea.text-white { color: #0F172A; }
+    input::placeholder, textarea::placeholder { color: #94A3B8; }
+    .bg-surface, aside { box-shadow: 0 1px 3px rgba(15,23,42,.06); }
+    /* Açık tema durum rozetleri */
+    .bg-green-900\/50{background:#DCFCE7!important}.text-green-400{color:#15803D!important}
+    .bg-red-900\/50{background:#FEE2E2!important}.text-red-400{color:#B91C1C!important}
+    .bg-yellow-900\/50{background:#FEF3C7!important}.text-yellow-400{color:#B45309!important}
+    .bg-blue-900\/50{background:#DBEAFE!important}.text-blue-400{color:#1D4ED8!important}
+    .bg-red-900\/30{background:#FEE2E2!important}.text-red-300{color:#B91C1C!important}.border-red-800{border-color:#FECACA!important}
+    .bg-green-900\/30{background:#DCFCE7!important}.text-green-300{color:#15803D!important}.border-green-800{border-color:#BBF7D0!important}
+    .bg-red-900\/10{background:#FEF2F2!important}
+    .hover\:bg-red-900\/30:hover{background:#FEE2E2!important}
+    .hover\:bg-white\/5:hover{background:rgba(15,23,42,.04)!important}
+    .hover\:text-white:hover{color:#0F172A!important}
+    .border-red-900{border-color:#BFDBFE!important}
   </style>
 </head>
 <body class="bg-bg text-text min-h-screen flex">
 <% if (user) { %>
 <aside class="hidden md:flex flex-col w-60 bg-surface border-r border-border fixed h-full z-40">
-  <div class="px-5 py-5 border-b border-border">
-    <div class="flex items-center gap-2">
-      <span class="material-symbols-outlined text-red icon-fill text-2xl">ac_unit</span>
-      <div>
-        <span class="font-bold text-red text-lg block leading-none">Confort</span>
-        <span class="text-[10px] text-muted">Satış Takip</span>
-      </div>
-    </div>
+  <div class="px-4 py-4 border-b border-border">
+    <img src="/img/confort-logo.jpg" alt="Confort İklimlendirme" class="w-full h-auto rounded-xl shadow-sm">
+    <p class="text-center text-[11px] text-muted mt-2 tracking-[0.2em] font-semibold">SATIŞ TAKİP</p>
   </div>
   <nav class="flex-grow px-3 py-4 space-y-1">
     <a href="/" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors <%= typeof page!=='undefined'&&page==='dash'?'bg-red/10 text-red font-bold':'text-muted hover:bg-white/5' %>">

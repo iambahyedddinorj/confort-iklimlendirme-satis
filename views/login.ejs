@@ -7,26 +7,25 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL@20..48,100..700,0..1" rel="stylesheet">
 </head>
-<body class="bg-[#0a0a0a] text-gray-100 min-h-screen flex items-center justify-center">
+<body class="bg-[#EEF3F9] text-slate-800 min-h-screen flex items-center justify-center">
   <div class="w-full max-w-sm">
     <div class="text-center mb-8">
-      <span class="material-symbols-outlined text-red-600 text-5xl" style="font-variation-settings:'FILL' 1">ac_unit</span>
-      <h1 class="text-2xl font-bold text-red-600 mt-2">Confort Satış Takip</h1>
-      <p class="text-gray-500 text-sm mt-1">Confort İklimlendirme</p>
+      <img src="/img/confort-logo.jpg" alt="Confort İklimlendirme" class="w-56 mx-auto rounded-2xl shadow-md">
+      <p class="text-slate-500 text-sm mt-4 tracking-[0.18em] font-semibold">SATIŞ TAKİP</p>
     </div>
     <% if (typeof flash!=='undefined' && flash && flash.msg) { %>
-      <div class="bg-red-900/30 border border-red-800 text-red-300 px-4 py-3 rounded-lg mb-4"><%= flash.msg %></div>
+      <div class="bg-red-100 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4"><%= flash.msg %></div>
     <% } %>
-    <form method="POST" action="/giris" class="bg-[#141414] border border-[#262626] rounded-xl p-6 space-y-4">
+    <form method="POST" action="/giris" class="bg-white border border-[#D8E1EC] rounded-xl p-6 space-y-4 shadow-sm">
       <div>
-        <label class="text-gray-400 text-sm block mb-1">Kullanıcı Adı</label>
-        <input name="username" required class="w-full bg-[#0a0a0a] border border-[#262626] rounded-lg px-4 py-3 text-white focus:border-red-600 focus:outline-none" placeholder="admin">
+        <label class="text-slate-500 text-sm block mb-1">Kullanıcı Adı</label>
+        <input name="username" required class="w-full bg-[#F8FAFC] border border-[#D8E1EC] rounded-lg px-4 py-3 text-slate-800 focus:border-blue-600 focus:outline-none" placeholder="admin">
       </div>
       <div>
-        <label class="text-gray-400 text-sm block mb-1">Şifre</label>
-        <input name="password" type="password" required class="w-full bg-[#0a0a0a] border border-[#262626] rounded-lg px-4 py-3 text-white focus:border-red-600 focus:outline-none" placeholder="••••••">
+        <label class="text-slate-500 text-sm block mb-1">Şifre</label>
+        <input name="password" type="password" required class="w-full bg-[#F8FAFC] border border-[#D8E1EC] rounded-lg px-4 py-3 text-slate-800 focus:border-blue-600 focus:outline-none" placeholder="••••••">
       </div>
-      <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition-colors">Giriş Yap</button>
+      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors">Giriş Yap</button>
     </form>
   </div>
 <script>
