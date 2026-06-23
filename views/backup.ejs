@@ -1,0 +1,61 @@
+<%- include('layout') %>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl">
+
+  <div class="bg-surface border border-border rounded-xl p-6">
+    <h2 class="text-red font-bold text-lg mb-2 flex items-center gap-2"><span class="material-symbols-outlined icon-fill">download</span> Yedek İndir</h2>
+    <p class="text-muted text-sm mb-4">Tüm verilerini bilgisayarına indir. İstediğin zaman geri yükleyebilirsin.</p>
+    <div class="flex flex-wrap gap-3">
+      <a href="/yedek/json" class="bg-red hover:bg-red-700 text-white font-bold px-5 py-3 rounded-lg flex items-center gap-2"><span class="material-symbols-outlined text-[20px]">data_object</span> JSON Yedeği İndir</a>
+      <a href="/yedek/db" class="bg-surface border border-border hover:border-red text-muted hover:text-white px-5 py-3 rounded-lg flex items-center gap-2"><span class="material-symbols-outlined text-[20px]">database</span> Veritabanı (.db) İndir</a>
+    </div>
+  </div>
+
+  <div class="bg-surface border border-border rounded-xl p-6">
+    <h2 class="text-red font-bold text-lg mb-2 flex items-center gap-2"><span class="material-symbols-outlined icon-fill">upload</span> Yedeği Geri Yükle</h2>
+    <p class="text-muted text-sm mb-4">Daha önce indirdiğin <strong>JSON</strong> yedeğini yükle. Dikkat: mevcut veriler bu yedekle değiştirilir.</p>
+    <form method="POST" action="/yedek/yukle" enctype="multipart/form-data" class="space-y-3" onsubmit="return confirm('Mevcut tüm veriler yedekteki verilerle değiştirilecek. Emin misin?')">
+      <input type="file" name="file" accept=".json,application/json" required class="block w-full text-sm text-muted file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-red file:text-white file:font-bold file:cursor-pointer">
+      <button type="submit" class="bg-red hover:bg-red-700 text-white font-bold px-5 py-3 rounded-lg flex items-center gap-2"><span class="material-symbols-outlined text-[20px]">restore</span> Geri Yükle</button>
+    </form>
+  </div>
+
+  <div class="bg-surface border border-border rounded-xl p-6 lg:col-span-2">
+    <h2 class="text-red font-bold text-lg mb-2 flex items-center gap-2"><span class="material-symbols-outlined icon-fill">cloud_sync</span> Otomatik Klasör Yedeği (Google Drive / OneDrive)</h2>
+    <p class="text-muted text-sm mb-4">Bir yedek klasörü belirle. Bilgisayarındaki <strong>Google Drive</strong> veya <strong>OneDrive</strong> senkron klasörünü seçersen, yedekler otomatik olarak buluta yüklenir.</p>
+    <form method="POST" action="/yedek/ayar" class="space-y-4">
+      <div>
+        <label class="text-muted text-sm block mb-1">Yedek Klasörü (tam yol)</label>
+        <input name="backup_folder" value="<%= settings.backup_folder || '' %>" class="w-full bg-bg border border-border rounded-lg px-4 py-3 text-white focus:border-red focus:outline-none" placeholder="Örn: C:\Users\KullaniciAdi\Google Drive\Yedekler">
+      </div>
+      <label class="flex items-center gap-2 text-sm text-muted cursor-pointer">
+        <input type="checkbox" name="backup_auto" value="1" <%= settings.backup_auto==='1'?'checked':'' %> class="w-4 h-4 accent-red"> Otomatik yedeklemeyi aç (6 saatte bir)
+      </label>
+      <div class="flex flex-wrap gap-3">
+        <button type="submit" class="bg-red hover:bg-red-700 text-white font-bold px-5 py-3 rounded-lg flex items-center gap-2"><span class="material-symbols-outlined text-[20px]">save</span> Ayarı Kaydet</button>
+        <button type="submit" formaction="/yedek/klasore" class="bg-surface border border-border hover:border-green-600 text-muted hover:text-green-400 px-5 py-3 rounded-lg flex items-center gap-2"><span class="material-symbols-outlined text-[20px]">backup</span> Şimdi Klasöre Yedekle</button>
+      </div>
+    </form>
+    <% if (backups.length) { %>
+    <div class="mt-5 pt-4 border-t border-border">
+      <p class="text-muted text-sm mb-2">Klasördeki son yedekler:</p>
+      <div class="flex flex-wrap gap-2">
+        <% backups.forEach(b => { %><span class="bg-bg border border-border rounded-full px-3 py-1 text-xs font-mono"><%= b %></span><% }) %>
+      </div>
+    </div>
+    <% } %>
+  </div>
+
+  <div class="bg-surface border border-border rounded-xl p-6 lg:col-span-2">
+    <h2 class="text-red font-bold text-lg mb-2 flex items-center gap-2"><span class="material-symbols-outlined icon-fill">info</span> Başka Nasıl Yedek Alabilirsin?</h2>
+    <ul class="text-muted text-sm space-y-2 list-disc pl-5">
+      <li><strong>E-posta ile:</strong> JSON yedeğini indir, kendine e-posta at. Her yerden erişirsin.</li>
+      <li><strong>USB / Harici disk:</strong> JSON veya .db dosyasını USB belleğe kopyala.</li>
+      <li><strong>Google Drive / OneDrive (otomatik):</strong> Yukarıdaki klasörü senkron klasörü yap — gerisi otomatik.</li>
+      <li><strong>WhatsApp / Telegram:</strong> Yedeği kendi numarana gönder, bulutta saklanır.</li>
+    </ul>
+  </div>
+
+</div>
+
+<%- include('layout-end') %>

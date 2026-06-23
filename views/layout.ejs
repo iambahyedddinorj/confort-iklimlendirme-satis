@@ -52,10 +52,16 @@
     <a href="/stok" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors <%= typeof page!=='undefined'&&page==='stock'?'bg-red/10 text-red font-bold':'text-muted hover:bg-white/5' %>">
       <span class="material-symbols-outlined text-[20px]">inventory_2</span><span>Stok</span>
     </a>
+    <a href="/kasa" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors <%= typeof page!=='undefined'&&page==='kasa'?'bg-red/10 text-red font-bold':'text-muted hover:bg-white/5' %>">
+      <span class="material-symbols-outlined text-[20px]">account_balance_wallet</span><span>Kasa</span>
+    </a>
     <a href="/raporlar" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors <%= typeof page!=='undefined'&&page==='reports'?'bg-red/10 text-red font-bold':'text-muted hover:bg-white/5' %>">
       <span class="material-symbols-outlined text-[20px]">bar_chart</span><span>Raporlar</span>
     </a>
     <div class="mt-4 pt-3 border-t border-border/50">
+      <a href="/yedek" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors <%= typeof page!=='undefined'&&page==='yedek'?'bg-red/10 text-red font-bold':'text-muted hover:bg-white/5' %>">
+        <span class="material-symbols-outlined text-[20px]">cloud_sync</span><span>Yedekleme</span>
+      </a>
       <a href="/ayarlar" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors <%= typeof page!=='undefined'&&page==='settings'?'bg-red/10 text-red font-bold':'text-muted hover:bg-white/5' %>">
         <span class="material-symbols-outlined text-[20px]">settings</span><span>Ayarlar</span>
       </a>
@@ -81,7 +87,9 @@
     <a href="/satislar" class="flex items-center gap-3 px-3 py-2 rounded-lg text-muted">🧾 Satışlar</a>
     <a href="/teklifler" class="flex items-center gap-3 px-3 py-2 rounded-lg text-muted">📋 Teklifler</a>
     <a href="/stok" class="flex items-center gap-3 px-3 py-2 rounded-lg text-muted">📦 Stok</a>
+    <a href="/kasa" class="flex items-center gap-3 px-3 py-2 rounded-lg text-muted">💰 Kasa</a>
     <a href="/raporlar" class="flex items-center gap-3 px-3 py-2 rounded-lg text-muted">📊 Raporlar</a>
+    <a href="/yedek" class="flex items-center gap-3 px-3 py-2 rounded-lg text-muted">☁️ Yedekleme</a>
     <a href="/ayarlar" class="flex items-center gap-3 px-3 py-2 rounded-lg text-muted">⚙️ Ayarlar</a>
   </div>
   <% if (flash) { %>

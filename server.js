@@ -122,6 +122,8 @@ const defaultSettings = {
   tax_id: '',
   default_tax_rate: '20',
   default_valid_days: '3',
+  backup_folder: '',
+  backup_auto: '0',
   products: [
     'Confort 12000 BTU Inverter Klima',
     'Confort 18000 BTU Inverter Klima',
@@ -173,6 +175,49 @@ function getSettings() {
   return s;
 }
 
+// --- Yedekleme yardımcıları ---
+const BACKUP_TABLES = ['users','customers','sales','payments','stock','quotes','quote_items','stock_movements','transactions','settings'];
+function dateStamp() { return new Date().toISOString().slice(0,19).replace(/[:T]/g,'-'); }
+function exportData() {
+  const out = { _meta: { app: 'confort-iklimlendirme', exported_at: new Date().toISOString() } };
+  for (const t of BACKUP_TABLES) { try { out[t] = db.prepare('SELECT * FROM ' + t).all(); } catch { out[t] = []; } }
+  return out;
+}
+function importData(data) {
+  db.exec('BEGIN');
+  try {
+    for (const t of BACKUP_TABLES) {
+      if (!Array.isArray(data[t])) continue;
+      db.exec('DELETE FROM ' + t);
+      for (const row of data[t]) {
+        const cols = Object.keys(row);
+        if (!cols.length) continue;
+        const ph = cols.map(() => '?').join(',');
+        db.prepare(`INSERT INTO ${t}(${cols.join(',')}) VALUES(${ph})`).run(...cols.map(c => row[c]));
+      }
+    }
+    db.exec('COMMIT');
+  } catch (e) { db.exec('ROLLBACK'); throw e; }
+}
+function listLocalBackups() {
+  const dir = getSettings().backup_folder;
+  if (!dir || !fs.existsSync(dir)) return [];
+  try { return fs.readdirSync(dir).filter(f => f.startsWith('satis-backup-') && f.endsWith('.db')).sort().reverse().slice(0,20); } catch { return []; }
+}
+function runFolderBackup() {
+  const dir = getSettings().backup_folder;
+  if (!dir) return { ok: false, error: 'Yedek klasörü ayarlanmamış' };
+  try {
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    try { db.exec('PRAGMA wal_checkpoint(TRUNCATE)'); } catch {}
+    const file = `satis-backup-${dateStamp()}.db`;
+    fs.copyFileSync(path.join(DB_DIR, 'satis.db'), path.join(dir, file));
+    const all = fs.readdirSync(dir).filter(f => f.startsWith('satis-backup-') && f.endsWith('.db')).sort();
+    while (all.length > 30) { const old = all.shift(); try { fs.unlinkSync(path.join(dir, old)); } catch {} }
+    return { ok: true, file };
+  } catch (e) { return { ok: false, error: e.message }; }
+}
+
 // Multer for file uploads
 const upload = multer({ dest: path.join(DB_DIR, 'uploads'), limits: { fileSize: 10 * 1024 * 1024 } });
 
@@ -181,6 +226,15 @@ try { db.exec("ALTER TABLE sales ADD COLUMN paid_amount REAL NOT NULL DEFAULT 0"
 try { db.exec("ALTER TABLE sales ADD COLUMN payment_status TEXT DEFAULT 'Ödendi'"); } catch {}
 try { db.exec("UPDATE sales SET paid_amount=price, payment_status='Ödendi' WHERE paid_amount=0 AND price>0"); } catch {}
 try { db.exec("ALTER TABLE stock_movements ADD COLUMN user_name TEXT"); } catch {}
+try { db.exec(`CREATE TABLE IF NOT EXISTS transactions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  type TEXT NOT NULL,
+  category TEXT,
+  amount REAL NOT NULL DEFAULT 0,
+  tx_date TEXT NOT NULL,
+  description TEXT,
+  created_at TEXT DEFAULT (datetime('now','localtime'))
+)`); } catch {}
 
 // Varsayılan admin
 const adminExists = db.prepare("SELECT COUNT(*) as c FROM users").get().c;
@@ -810,7 +864,67 @@ app.get('/raporlar', auth, (req, res) => {
   const totalDebt = totalRevenue - totalCollected;
   const unpaidSales = q.all(`SELECT s.*, c.name as customer_name, c.phone as customer_phone FROM sales s JOIN customers c ON s.customer_id=c.id WHERE s.payment_status != 'Ödendi' ORDER BY (s.price - s.paid_amount) DESC`);
   const paymentMethods = q.all(`SELECT payment_method, COUNT(*) c, SUM(price) total FROM sales GROUP BY payment_method ORDER BY total DESC`);
-  res.render('reports', { monthlySales: monthlySales.reverse(), topProducts, topCustomers, totalRevenue, totalCollected, totalDebt, unpaidSales, paymentMethods, page: 'reports', title: 'Raporlar' });
+  const txGelir = q.get("SELECT COALESCE(SUM(amount),0) s FROM transactions WHERE type='gelir'").s;
+  const txGider = q.get("SELECT COALESCE(SUM(amount),0) s FROM transactions WHERE type='gider'").s;
+  const netProfit = totalCollected + txGelir - txGider;
+  const expenseByCat = q.all("SELECT COALESCE(NULLIF(category,''),'Diğer') category, SUM(amount) total FROM transactions WHERE type='gider' GROUP BY category ORDER BY total DESC");
+  res.render('reports', { monthlySales: monthlySales.reverse(), topProducts, topCustomers, totalRevenue, totalCollected, totalDebt, unpaidSales, paymentMethods, txGelir, txGider, netProfit, expenseByCat, page: 'reports', title: 'Raporlar' });
+});
+
+// --- Kasa (Gelir / Gider) ---
+app.get('/kasa', auth, (req, res) => {
+  const transactions = q.all('SELECT * FROM transactions ORDER BY tx_date DESC, id DESC');
+  const gelir = q.get("SELECT COALESCE(SUM(amount),0) s FROM transactions WHERE type='gelir'").s;
+  const gider = q.get("SELECT COALESCE(SUM(amount),0) s FROM transactions WHERE type='gider'").s;
+  res.render('cashbook', { transactions, gelir, gider, net: gelir - gider, page: 'kasa', title: 'Kasa — Gelir / Gider' });
+});
+app.post('/kasa/kaydet', auth, (req, res) => {
+  const { id, type, category, amount, tx_date, description } = req.body;
+  const t = type === 'gider' ? 'gider' : 'gelir';
+  if (id) q.run('UPDATE transactions SET type=?,category=?,amount=?,tx_date=?,description=? WHERE id=?', t, category, Number(amount), tx_date, description, id);
+  else q.run('INSERT INTO transactions(type,category,amount,tx_date,description) VALUES(?,?,?,?,?)', t, category, Number(amount), tx_date, description);
+  req.session.flash = { type: 'success', msg: 'Kayıt eklendi' };
+  res.redirect('/kasa');
+});
+app.post('/kasa/sil', auth, (req, res) => {
+  q.run('DELETE FROM transactions WHERE id=?', req.body.id);
+  req.session.flash = { type: 'success', msg: 'Kayıt silindi' };
+  res.redirect('/kasa');
+});
+
+// --- Yedekleme ---
+app.get('/yedek', auth, (req, res) => {
+  res.render('backup', { settings: getSettings(), backups: listLocalBackups(), page: 'yedek', title: 'Yedekleme' });
+});
+app.get('/yedek/json', auth, (req, res) => {
+  res.setHeader('Content-Disposition', `attachment; filename="yedek-${dateStamp()}.json"`);
+  res.setHeader('Content-Type', 'application/json');
+  res.send(JSON.stringify(exportData(), null, 2));
+});
+app.get('/yedek/db', auth, (req, res) => {
+  try { db.exec('PRAGMA wal_checkpoint(TRUNCATE)'); } catch {}
+  res.download(path.join(DB_DIR, 'satis.db'), `satis-${dateStamp()}.db`);
+});
+app.post('/yedek/yukle', auth, upload.single('file'), (req, res) => {
+  try {
+    if (!req.file) throw new Error('Dosya seçilmedi');
+    const raw = fs.readFileSync(req.file.path, 'utf8');
+    importData(JSON.parse(raw));
+    fs.unlinkSync(req.file.path);
+    req.session.flash = { type: 'success', msg: 'Yedek geri yüklendi' };
+  } catch (e) { req.session.flash = { type: 'error', msg: 'Yedek yüklenemedi: ' + e.message }; }
+  res.redirect('/yedek');
+});
+app.post('/yedek/klasore', auth, (req, res) => {
+  const r = runFolderBackup();
+  req.session.flash = r.ok ? { type: 'success', msg: 'Klasöre yedeklendi: ' + r.file } : { type: 'error', msg: r.error };
+  res.redirect('/yedek');
+});
+app.post('/yedek/ayar', auth, (req, res) => {
+  q.run('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value', 'backup_folder', req.body.backup_folder || '');
+  q.run('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value', 'backup_auto', req.body.backup_auto ? '1' : '0');
+  req.session.flash = { type: 'success', msg: 'Yedek ayarları kaydedildi' };
+  res.redirect('/yedek');
 });
 
 // --- Ayarlar ---
@@ -957,6 +1071,11 @@ app.get('/teklif/:id/word', auth, async (req, res) => {
   res.setHeader('Content-Disposition', `attachment; filename=Teklif-${quote.id}.docx`);
   res.end(buffer);
 });
+
+// Otomatik klasör yedeği — açıksa 6 saatte bir
+setInterval(() => {
+  try { const s = getSettings(); if (s.backup_auto === '1' && s.backup_folder) runFolderBackup(); } catch {}
+}, 6 * 60 * 60 * 1000);
 
 app.listen(PORT, () => {
   console.log(`\n  Confort Satış Takip → http://localhost:${PORT}`);

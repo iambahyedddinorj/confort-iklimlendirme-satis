@@ -1,0 +1,86 @@
+<%- include('layout') %>
+
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+  <div class="bg-surface border border-border rounded-xl p-5">
+    <p class="text-muted text-sm">Toplam Gelir</p>
+    <p class="text-2xl font-bold text-green-400 mt-1"><%= money(gelir) %></p>
+  </div>
+  <div class="bg-surface border border-border rounded-xl p-5">
+    <p class="text-muted text-sm">Toplam Gider</p>
+    <p class="text-2xl font-bold text-red mt-1"><%= money(gider) %></p>
+  </div>
+  <div class="bg-surface border border-border rounded-xl p-5">
+    <p class="text-muted text-sm">Net Kasa</p>
+    <p class="text-2xl font-bold <%= net>=0?'text-green-400':'text-red' %> mt-1"><%= money(net) %></p>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-2">
+    <div class="bg-surface border border-border rounded-xl p-5">
+      <h2 class="text-lg font-bold text-red mb-4">Gelir / Gider Hareketleri</h2>
+      <% if (transactions.length) { %>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead><tr class="text-muted border-b border-border">
+            <th class="py-2 pr-3">Tarih</th><th class="py-2 pr-3">Tür</th><th class="py-2 pr-3">Kategori</th><th class="py-2 pr-3">Açıklama</th><th class="py-2 pr-3 text-right">Tutar</th><th class="py-2 text-center">İşlem</th>
+          </tr></thead>
+          <tbody>
+            <% transactions.forEach(t => { %>
+            <tr class="border-b border-border/30 hover:bg-white/5">
+              <td class="py-2 pr-3 text-muted whitespace-nowrap"><%= t.tx_date %></td>
+              <td class="py-2 pr-3"><span class="px-2 py-1 rounded-full text-xs font-bold <%= t.type==='gelir'?'bg-green-900/50 text-green-400':'bg-red-900/50 text-red-400' %>"><%= t.type==='gelir'?'Gelir':'Gider' %></span></td>
+              <td class="py-2 pr-3"><%= t.category || '-' %></td>
+              <td class="py-2 pr-3 text-muted"><%= t.description || '-' %></td>
+              <td class="py-2 pr-3 text-right font-bold <%= t.type==='gelir'?'text-green-400':'text-red' %>"><%= t.type==='gelir'?'+':'-' %><%= money(t.amount) %></td>
+              <td class="py-2 text-center">
+                <form method="POST" action="/kasa/sil" class="inline" onsubmit="return confirm('Bu kaydı silmek istediğinden emin misin?')"><input type="hidden" name="id" value="<%= t.id %>"><button class="text-muted hover:text-red p-1"><span class="material-symbols-outlined text-[18px]">delete</span></button></form>
+              </td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% } else { %>
+      <p class="text-muted text-center py-8">Henüz kayıt yok.</p>
+      <% } %>
+    </div>
+  </div>
+
+  <div>
+    <div class="bg-surface border border-border rounded-xl p-5">
+      <h3 class="text-red font-bold mb-4">Yeni Kayıt</h3>
+      <form method="POST" action="/kasa/kaydet" class="space-y-3">
+        <div>
+          <label class="text-muted text-sm block mb-1">Tür</label>
+          <select name="type" class="w-full bg-bg border border-border rounded-lg px-4 py-3 text-white focus:border-red focus:outline-none">
+            <option value="gelir">Gelir (+)</option>
+            <option value="gider">Gider (−)</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-muted text-sm block mb-1">Kategori</label>
+          <input name="category" list="dl-cat" class="w-full bg-bg border border-border rounded-lg px-4 py-3 text-white focus:border-red focus:outline-none" placeholder="Örn: Yakıt, Kira, Malzeme">
+          <datalist id="dl-cat">
+            <option value="Malzeme Alımı"><option value="Yakıt"><option value="Kira"><option value="Maaş / İşçilik"><option value="Elektrik / Su / İnternet"><option value="Vergi"><option value="Servis Geliri"><option value="Diğer">
+          </datalist>
+        </div>
+        <div>
+          <label class="text-muted text-sm block mb-1">Tutar (TL)</label>
+          <input name="amount" type="number" step="0.01" min="0" required class="w-full bg-bg border border-border rounded-lg px-4 py-3 text-white focus:border-red focus:outline-none">
+        </div>
+        <div>
+          <label class="text-muted text-sm block mb-1">Tarih</label>
+          <input name="tx_date" type="date" required value="<%= new Date().toISOString().slice(0,10) %>" class="w-full bg-bg border border-border rounded-lg px-4 py-3 text-white focus:border-red focus:outline-none">
+        </div>
+        <div>
+          <label class="text-muted text-sm block mb-1">Açıklama</label>
+          <input name="description" class="w-full bg-bg border border-border rounded-lg px-4 py-3 text-white focus:border-red focus:outline-none" placeholder="İsteğe bağlı">
+        </div>
+        <button type="submit" class="w-full bg-red hover:bg-red-700 text-white font-bold py-3 rounded-lg">Kaydet</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('layout-end') %>
