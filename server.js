@@ -123,6 +123,7 @@ const defaultSettings = {
   default_tax_rate: '20',
   default_valid_days: '3',
   backup_folder: '',
+  backup_folder2: '',
   backup_auto: '0',
   products: [
     'Confort 12000 BTU Inverter Klima',
@@ -307,11 +308,9 @@ function cleanupBackups(dir) {
     } catch {}
   }
 }
-async function runFolderBackup() {
-  const dir = getSettings().backup_folder;
-  if (!dir) return { ok: false, error: 'Yedek klasörü ayarlanmamış' };
-  try { if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); } catch (e) { return { ok: false, error: e.message }; }
-  const base = path.join(dir, 'satis-backup-' + dateStamp());
+async function writeBackupSet(dir, stamp, jsonStr, xlsxBuf, pdfBuf) {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  const base = path.join(dir, 'satis-backup-' + stamp);
   const done = [];
   try {
     const dbOut = (base + '.db').replace(/\\/g, '/').replace(/'/g, "''");
@@ -320,11 +319,24 @@ async function runFolderBackup() {
   } catch {
     try { db.exec('PRAGMA wal_checkpoint(TRUNCATE)'); fs.copyFileSync(path.join(DB_DIR, 'satis.db'), base + '.db'); done.push('db'); } catch {}
   }
-  try { fs.writeFileSync(base + '.json', JSON.stringify(exportData(), null, 2)); done.push('json'); } catch {}
-  try { fs.writeFileSync(base + '.xlsx', await buildExcel()); done.push('xlsx'); } catch {}
-  try { fs.writeFileSync(base + '.pdf', await buildPdf()); done.push('pdf'); } catch {}
+  try { fs.writeFileSync(base + '.json', jsonStr); done.push('json'); } catch {}
+  try { if (xlsxBuf) { fs.writeFileSync(base + '.xlsx', xlsxBuf); done.push('xlsx'); } } catch {}
+  try { if (pdfBuf) { fs.writeFileSync(base + '.pdf', pdfBuf); done.push('pdf'); } } catch {}
   cleanupBackups(dir);
-  return { ok: done.length > 0, formats: done, error: done.length ? null : 'Hiçbir format yazılamadı' };
+  return done;
+}
+async function runFolderBackup() {
+  const s = getSettings();
+  const dirs = [s.backup_folder, s.backup_folder2].map(d => (d || '').trim()).filter(Boolean);
+  if (!dirs.length) return { ok: false, error: 'Yedek klasörü ayarlanmamış' };
+  const stamp = dateStamp();
+  const jsonStr = JSON.stringify(exportData(), null, 2);
+  let xlsxBuf = null, pdfBuf = null;
+  try { xlsxBuf = await buildExcel(); } catch {}
+  try { pdfBuf = await buildPdf(); } catch {}
+  let formats = [];
+  for (const d of dirs) { try { formats = await writeBackupSet(d, stamp, jsonStr, xlsxBuf, pdfBuf); } catch {} }
+  return { ok: formats.length > 0, formats, dirs, error: formats.length ? null : 'Hiçbir format yazılamadı' };
 }
 
 // Multer for file uploads
@@ -1022,6 +1034,7 @@ app.post('/yedek/klasore', auth, async (req, res) => {
 });
 app.post('/yedek/ayar', auth, (req, res) => {
   q.run('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value', 'backup_folder', req.body.backup_folder || '');
+  q.run('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value', 'backup_folder2', req.body.backup_folder2 || '');
   q.run('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value', 'backup_auto', req.body.backup_auto ? '1' : '0');
   req.session.flash = { type: 'success', msg: 'Yedek ayarları kaydedildi' };
   res.redirect('/yedek');

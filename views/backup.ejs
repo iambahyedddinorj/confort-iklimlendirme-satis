@@ -27,8 +27,12 @@
     <p class="text-muted text-sm mb-4">Bir yedek klasörü belirle. Her yedekte <strong>4 format</strong> kaydedilir: <strong>.db</strong>, <strong>.json</strong>, <strong>Excel (.xlsx)</strong> ve <strong>PDF özet</strong>. Bilgisayarındaki <strong>Google Drive</strong> / <strong>OneDrive</strong> senkron klasörünü seçersen otomatik buluta yüklenir.</p>
     <form method="POST" action="/yedek/ayar" class="space-y-4">
       <div>
-        <label class="text-muted text-sm block mb-1">Yedek Klasörü (tam yol)</label>
-        <input name="backup_folder" value="<%= settings.backup_folder || '' %>" class="w-full bg-bg border border-border rounded-lg px-4 py-3 text-white focus:border-red focus:outline-none" placeholder="Örn: C:\Users\KullaniciAdi\Google Drive\Yedekler">
+        <label class="text-muted text-sm block mb-1">1. Yedek Klasörü (yerel — örn. D:\yedek\confort)</label>
+        <input name="backup_folder" value="<%= settings.backup_folder || '' %>" class="w-full bg-bg border border-border rounded-lg px-4 py-3 text-white focus:border-red focus:outline-none" placeholder="Örn: D:\yedek\confort">
+      </div>
+      <div>
+        <label class="text-muted text-sm block mb-1">2. Yedek Klasörü (bulut — Google Drive / OneDrive senkron klasörü) <span class="text-muted">(isteğe bağlı)</span></label>
+        <input name="backup_folder2" value="<%= settings.backup_folder2 || '' %>" class="w-full bg-bg border border-border rounded-lg px-4 py-3 text-white focus:border-red focus:outline-none" placeholder="Örn: G:\My Drive\KlimaYedek">
       </div>
       <label class="flex items-center gap-2 text-sm text-muted cursor-pointer">
         <input type="checkbox" name="backup_auto" value="1" <%= settings.backup_auto==='1'?'checked':'' %> class="w-4 h-4 accent-red"> Otomatik yedeklemeyi aç (her akşam 20:00 — gün sonu)
