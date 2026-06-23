@@ -127,6 +127,27 @@ for (const [k, v] of Object.entries(defaultSettings)) {
   try { db.prepare('INSERT INTO settings(key,value) VALUES(?,?)').run(k, v); } catch {}
 }
 
+// Tek seferlik temizlik: Hantech/Akyüz klonundan kalan eski firma bilgilerini sil.
+// Sadece eski değerlerle birebir eşleşirse temizler, bir kez çalışır (kullanıcının girdiği yeni veriyi bozmaz).
+try {
+  const migKey = 'mig_clear_legacy_v1';
+  const done = db.prepare('SELECT value FROM settings WHERE key=?').get(migKey);
+  if (!done) {
+    const stale = {
+      owner_name: 'Akyüz İklimlendirme',
+      address: 'Haliliye / Şanlıurfa',
+      phone: '+90 542 575 70 98',
+      website: 'www.akyüziklimlendirme.com.tr',
+    };
+    const upd = db.prepare('UPDATE settings SET value=? WHERE key=? AND value=?');
+    upd.run('Confort İklimlendirme', 'owner_name', stale.owner_name);
+    upd.run('', 'address', stale.address);
+    upd.run('', 'phone', stale.phone);
+    upd.run('', 'website', stale.website);
+    db.prepare('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').run(migKey, '1');
+  }
+} catch {}
+
 function getSettings() {
   const rows = db.prepare('SELECT * FROM settings').all();
   const s = {};
