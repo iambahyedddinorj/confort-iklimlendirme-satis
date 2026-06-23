@@ -67,22 +67,9 @@
   </div>
 
   <datalist id="dl-products">
-    <option value="Confort 12000 BTU Inverter Klima">
-    <option value="Confort 18000 BTU Inverter Klima">
-    <option value="Confort 24000 BTU Inverter Klima">
-    <option value="Confort 9000 BTU Inverter Klima">
-    <option value="Salon Tipi Klima">
-    <option value="VRF Sistem">
-    <option value="Klima Bakım & Onarım">
-    <option value="Klima Montaj">
-    <option value="Klima Demontaj">
-    <option value="Klima Taşıma">
-    <option value="Gaz Şarjı (R410A)">
-    <option value="Gaz Şarjı (R32)">
-    <option value="Bakır Boru (metre)">
-    <option value="Drenaj Hortumu">
-    <option value="Elektrik Tesisatı">
-    <option value="İşçilik">
+    <% (settings && settings.products ? settings.products.split('\n') : []).forEach(p => { if (p.trim()) { %>
+    <option value="<%= p.trim() %>">
+    <% } }) %>
   </datalist>
 
   <div class="bg-surface border border-border rounded-xl p-6 mb-6">

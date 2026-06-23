@@ -122,6 +122,24 @@ const defaultSettings = {
   tax_id: '',
   default_tax_rate: '20',
   default_valid_days: '3',
+  products: [
+    'Confort 12000 BTU Inverter Klima',
+    'Confort 18000 BTU Inverter Klima',
+    'Confort 24000 BTU Inverter Klima',
+    'Confort 9000 BTU Inverter Klima',
+    'Salon Tipi Klima',
+    'VRF Sistem',
+    'Klima Bakım & Onarım',
+    'Klima Montaj',
+    'Klima Demontaj',
+    'Klima Taşıma',
+    'Gaz Şarjı (R410A)',
+    'Gaz Şarjı (R32)',
+    'Bakır Boru (metre)',
+    'Drenaj Hortumu',
+    'Elektrik Tesisatı',
+    'İşçilik',
+  ].join('\n'),
 };
 for (const [k, v] of Object.entries(defaultSettings)) {
   try { db.prepare('INSERT INTO settings(key,value) VALUES(?,?)').run(k, v); } catch {}
@@ -198,6 +216,7 @@ app.use((req, res, next) => {
   res.locals.flash = req.session.flash || null;
   req.session.flash = null;
   res.locals.money = (n) => Number(n || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' TL';
+  res.locals.settings = getSettings();
   next();
 });
 
@@ -801,7 +820,7 @@ app.get('/ayarlar', auth, (req, res) => {
 });
 
 app.post('/ayarlar', auth, (req, res) => {
-  const keys = ['company_name', 'company_subtitle', 'owner_name', 'address', 'phone', 'website', 'tax_id', 'default_tax_rate', 'default_valid_days'];
+  const keys = ['company_name', 'company_subtitle', 'owner_name', 'address', 'phone', 'website', 'tax_id', 'default_tax_rate', 'default_valid_days', 'products'];
   keys.forEach(k => {
     q.run('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value', k, req.body[k] || '');
   });
