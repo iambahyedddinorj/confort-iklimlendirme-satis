@@ -788,31 +788,6 @@ app.post('/teklif/sil', auth, (req, res) => {
   res.redirect('/teklifler');
 });
 
-app.post('/teklif/satisa-cevir', auth, (req, res) => {
-  const quote = q.get('SELECT * FROM quotes WHERE id=?', req.body.id);
-  if (!quote) return res.redirect('/teklifler');
-  const items = q.all('SELECT * FROM quote_items WHERE quote_id=?', quote.id);
-  const subtotal = items.reduce((s, i) => s + i.quantity * i.unit_price, 0);
-  let discount = 0;
-  if (quote.discount_type === 'percent') discount = subtotal * quote.discount_value / 100;
-  else if (quote.discount_type === 'amount') discount = quote.discount_value;
-  const total = (subtotal - discount) * (1 + quote.tax_rate / 100);
-  const productNames = items.map(i => i.product_name).join(', ');
-
-  let custId = quote.customer_id;
-  if (!custId && quote.customer_name) {
-    const r = q.run('INSERT INTO customers(name,phone,address) VALUES(?,?,?)', quote.customer_name, quote.customer_phone, quote.customer_address);
-    custId = r.lastInsertRowid;
-  }
-  if (!custId) { req.session.flash = { type: 'error', msg: 'Müşteri bilgisi gerekli' }; return res.redirect('/teklif/' + quote.id); }
-
-  const r = q.run('INSERT INTO sales(customer_id,product_name,sale_date,price,paid_amount,payment_method,payment_status,notes) VALUES(?,?,?,?,?,?,?,?)',
-    custId, productNames, new Date().toISOString().slice(0, 10), Math.round(total * 100) / 100, 0, 'Nakit', 'Ödenmedi', 'Teklif #' + quote.id + ' üzerinden oluşturuldu');
-  q.run("UPDATE quotes SET status='Onaylandı' WHERE id=?", quote.id);
-  req.session.flash = { type: 'success', msg: 'Teklif satışa çevrildi' };
-  res.redirect('/satis/' + r.lastInsertRowid);
-});
-
 // --- Stok ---
 app.get('/stok', auth, (req, res) => {
   const items = q.all('SELECT * FROM stock ORDER BY product_name');

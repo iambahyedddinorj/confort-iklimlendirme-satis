@@ -16,14 +16,6 @@
   <a href="/teklif/<%= quote.id %>/word" class="bg-surface border border-border hover:border-blue-600 text-muted hover:text-blue-400 px-4 py-2 rounded-lg flex items-center gap-2">
     <span class="material-symbols-outlined text-[18px]">article</span> Word İndir
   </a>
-  <% if (quote.status !== 'Onaylandı') { %>
-  <form method="POST" action="/teklif/satisa-cevir" class="inline" onsubmit="return confirm('Bu teklifi satışa çevirmek istediğinden emin misin?')">
-    <input type="hidden" name="id" value="<%= quote.id %>">
-    <button class="bg-green-700 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-bold">
-      <span class="material-symbols-outlined text-[18px]">shopping_cart</span> Satışa Çevir
-    </button>
-  </form>
-  <% } %>
   <form method="POST" action="/teklif/sil" class="inline" onsubmit="return confirm('Bu teklifi silmek istediğinden emin misin?')">
     <input type="hidden" name="id" value="<%= quote.id %>">
     <button class="bg-surface border border-red-900 text-red hover:bg-red-900/30 px-4 py-2 rounded-lg flex items-center gap-2">
