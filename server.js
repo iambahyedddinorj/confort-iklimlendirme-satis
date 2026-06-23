@@ -1047,10 +1047,20 @@ app.get('/teklif/:id/word', auth, async (req, res) => {
   res.end(buffer);
 });
 
-// Otomatik klasör yedeği — açıksa 6 saatte bir
+// Otomatik klasör yedeği — açıksa her akşam saat 20:00'de (gün sonu), günde bir kez
+let _lastBackupDay = '';
 setInterval(() => {
-  try { const s = getSettings(); if (s.backup_auto === '1' && s.backup_folder) runFolderBackup(); } catch {}
-}, 6 * 60 * 60 * 1000);
+  try {
+    const s = getSettings();
+    if (s.backup_auto !== '1' || !s.backup_folder) return;
+    const now = new Date();
+    const today = now.toISOString().slice(0, 10);
+    if (now.getHours() >= 20 && _lastBackupDay !== today) {
+      const r = runFolderBackup();
+      if (r.ok) _lastBackupDay = today;
+    }
+  } catch {}
+}, 10 * 60 * 1000); // her 10 dakikada bir kontrol
 
 app.listen(PORT, () => {
   console.log(`\n  Confort Satış Takip → http://localhost:${PORT}`);

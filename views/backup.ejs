@@ -29,7 +29,7 @@
         <input name="backup_folder" value="<%= settings.backup_folder || '' %>" class="w-full bg-bg border border-border rounded-lg px-4 py-3 text-white focus:border-red focus:outline-none" placeholder="Örn: C:\Users\KullaniciAdi\Google Drive\Yedekler">
       </div>
       <label class="flex items-center gap-2 text-sm text-muted cursor-pointer">
-        <input type="checkbox" name="backup_auto" value="1" <%= settings.backup_auto==='1'?'checked':'' %> class="w-4 h-4 accent-red"> Otomatik yedeklemeyi aç (6 saatte bir)
+        <input type="checkbox" name="backup_auto" value="1" <%= settings.backup_auto==='1'?'checked':'' %> class="w-4 h-4 accent-red"> Otomatik yedeklemeyi aç (her akşam 20:00 — gün sonu)
       </label>
       <div class="flex flex-wrap gap-3">
         <button type="submit" class="bg-red hover:bg-red-700 text-white font-bold px-5 py-3 rounded-lg flex items-center gap-2"><span class="material-symbols-outlined text-[20px]">save</span> Ayarı Kaydet</button>
