@@ -6,7 +6,9 @@
     <h2 class="text-red font-bold text-lg mb-2 flex items-center gap-2"><span class="material-symbols-outlined icon-fill">download</span> Yedek İndir</h2>
     <p class="text-muted text-sm mb-4">Tüm verilerini bilgisayarına indir. İstediğin zaman geri yükleyebilirsin.</p>
     <div class="flex flex-wrap gap-3">
-      <a href="/yedek/json" class="bg-red hover:bg-red-700 text-white font-bold px-5 py-3 rounded-lg flex items-center gap-2"><span class="material-symbols-outlined text-[20px]">data_object</span> JSON Yedeği İndir</a>
+      <a href="/yedek/json" class="bg-red hover:bg-red-700 text-white font-bold px-5 py-3 rounded-lg flex items-center gap-2"><span class="material-symbols-outlined text-[20px]">data_object</span> JSON İndir</a>
+      <a href="/yedek/excel" class="bg-surface border border-border hover:border-green-600 text-muted hover:text-green-400 px-5 py-3 rounded-lg flex items-center gap-2"><span class="material-symbols-outlined text-[20px]">table_view</span> Excel İndir</a>
+      <a href="/yedek/pdf" class="bg-surface border border-border hover:border-red text-muted hover:text-white px-5 py-3 rounded-lg flex items-center gap-2"><span class="material-symbols-outlined text-[20px]">picture_as_pdf</span> PDF Özet İndir</a>
       <a href="/yedek/db" class="bg-surface border border-border hover:border-red text-muted hover:text-white px-5 py-3 rounded-lg flex items-center gap-2"><span class="material-symbols-outlined text-[20px]">database</span> Veritabanı (.db) İndir</a>
     </div>
   </div>
@@ -22,7 +24,7 @@
 
   <div class="bg-surface border border-border rounded-xl p-6 lg:col-span-2">
     <h2 class="text-red font-bold text-lg mb-2 flex items-center gap-2"><span class="material-symbols-outlined icon-fill">cloud_sync</span> Otomatik Klasör Yedeği (Google Drive / OneDrive)</h2>
-    <p class="text-muted text-sm mb-4">Bir yedek klasörü belirle. Bilgisayarındaki <strong>Google Drive</strong> veya <strong>OneDrive</strong> senkron klasörünü seçersen, yedekler otomatik olarak buluta yüklenir.</p>
+    <p class="text-muted text-sm mb-4">Bir yedek klasörü belirle. Her yedekte <strong>4 format</strong> kaydedilir: <strong>.db</strong>, <strong>.json</strong>, <strong>Excel (.xlsx)</strong> ve <strong>PDF özet</strong>. Bilgisayarındaki <strong>Google Drive</strong> / <strong>OneDrive</strong> senkron klasörünü seçersen otomatik buluta yüklenir.</p>
     <form method="POST" action="/yedek/ayar" class="space-y-4">
       <div>
         <label class="text-muted text-sm block mb-1">Yedek Klasörü (tam yol)</label>

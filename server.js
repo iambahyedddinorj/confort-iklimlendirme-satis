@@ -204,18 +204,127 @@ function listLocalBackups() {
   if (!dir || !fs.existsSync(dir)) return [];
   try { return fs.readdirSync(dir).filter(f => f.startsWith('satis-backup-') && f.endsWith('.db')).sort().reverse().slice(0,20); } catch { return []; }
 }
-function runFolderBackup() {
+async function buildExcel() {
+  const wb = new ExcelJS.Workbook();
+  const tables = { 'Müşteriler': 'customers', 'Satışlar': 'sales', 'Ödemeler': 'payments', 'Teklifler': 'quotes', 'Teklif Kalemleri': 'quote_items', 'Stok': 'stock', 'Kasa (Gelir-Gider)': 'transactions' };
+  for (const [sheet, t] of Object.entries(tables)) {
+    const ws = wb.addWorksheet(sheet);
+    let rows = [];
+    try { rows = db.prepare('SELECT * FROM ' + t).all(); } catch {}
+    if (rows.length) {
+      ws.columns = Object.keys(rows[0]).map(k => ({ header: k, key: k, width: 18 }));
+      rows.forEach(r => ws.addRow(r));
+      ws.getRow(1).font = { bold: true };
+    } else { ws.addRow(['(kayıt yok)']); }
+  }
+  return Buffer.from(await wb.xlsx.writeBuffer());
+}
+function buildSummaryHtml() {
+  const s = getSettings();
+  const num = (sql) => { try { return db.prepare(sql).get().v; } catch { return 0; } };
+  const fmt = (n) => Number(n || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' TL';
+  const custC = num('SELECT COUNT(*) v FROM customers');
+  const saleC = num('SELECT COUNT(*) v FROM sales');
+  const rev = num('SELECT COALESCE(SUM(price),0) v FROM sales');
+  const col = num('SELECT COALESCE(SUM(paid_amount),0) v FROM sales');
+  const gelir = num("SELECT COALESCE(SUM(amount),0) v FROM transactions WHERE type='gelir'");
+  const gider = num("SELECT COALESCE(SUM(amount),0) v FROM transactions WHERE type='gider'");
+  const net = col + gelir - gider;
+  return `<html><head><meta charset="utf-8"><style>
+    body{font-family:Segoe UI,Arial,sans-serif;color:#1a1a1a;padding:30px}
+    h1{color:#2563EB;margin:0 0 4px} .sub{color:#666;font-size:13px;margin-bottom:20px}
+    table{width:100%;border-collapse:collapse;margin-top:10px} td,th{border:1px solid #ddd;padding:8px;font-size:13px;text-align:left}
+    th{background:#2563EB;color:#fff} .r{text-align:right}</style></head><body>
+    <h1>${s.company_name || ''}</h1>
+    <div class="sub">Yedek Özet Raporu — ${new Date().toLocaleString('tr-TR')}</div>
+    <table>
+      <tr><th>Özet</th><th class="r">Değer</th></tr>
+      <tr><td>Toplam Müşteri</td><td class="r">${custC}</td></tr>
+      <tr><td>Toplam Satış</td><td class="r">${saleC}</td></tr>
+      <tr><td>Toplam Ciro</td><td class="r">${fmt(rev)}</td></tr>
+      <tr><td>Tahsil Edilen</td><td class="r">${fmt(col)}</td></tr>
+      <tr><td>Toplam Alacak</td><td class="r">${fmt(rev - col)}</td></tr>
+      <tr><td>Kasa Gelir</td><td class="r">${fmt(gelir)}</td></tr>
+      <tr><td>Kasa Gider</td><td class="r">${fmt(gider)}</td></tr>
+      <tr><td><b>Net Kâr</b></td><td class="r"><b>${fmt(net)}</b></td></tr>
+    </table>
+    <p style="color:#999;font-size:11px;margin-top:30px">Bu rapor otomatik yedekleme ile oluşturulmuştur.</p>
+    </body></html>`;
+}
+function pdfStats() {
+  const num = (sql) => { try { return db.prepare(sql).get().v; } catch { return 0; } };
+  const fmt = (n) => Number(n || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' TL';
+  const rev = num('SELECT COALESCE(SUM(price),0) v FROM sales');
+  const col = num('SELECT COALESCE(SUM(paid_amount),0) v FROM sales');
+  const gelir = num("SELECT COALESCE(SUM(amount),0) v FROM transactions WHERE type='gelir'");
+  const gider = num("SELECT COALESCE(SUM(amount),0) v FROM transactions WHERE type='gider'");
+  return [
+    ['Toplam Müşteri', String(num('SELECT COUNT(*) v FROM customers'))],
+    ['Toplam Satış', String(num('SELECT COUNT(*) v FROM sales'))],
+    ['Toplam Ciro', fmt(rev)],
+    ['Tahsil Edilen', fmt(col)],
+    ['Toplam Alacak', fmt(rev - col)],
+    ['Kasa Gelir', fmt(gelir)],
+    ['Kasa Gider', fmt(gider)],
+    ['Net Kâr', fmt(col + gelir - gider)],
+  ];
+}
+async function buildPdf() {
+  const PDFDocument = require('pdfkit');
+  const s = getSettings();
+  const fontPath = path.join(__dirname, 'public', 'fonts', 'app-font.ttf');
+  const blue = '#2563EB';
+  return await new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument({ size: 'A4', margin: 50 });
+      const chunks = [];
+      doc.on('data', c => chunks.push(c));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
+      if (fs.existsSync(fontPath)) doc.font(fontPath);
+      doc.fillColor(blue).fontSize(22).text(s.company_name || 'CONFORT İKLİMLENDİRME');
+      doc.moveDown(0.2).fillColor('#666').fontSize(11).text('Yedek Özet Raporu — ' + new Date().toLocaleString('tr-TR'));
+      doc.moveDown(1);
+      const rows = pdfStats();
+      const x = 50, w = 495; let y = doc.y;
+      rows.forEach(([k, v], i) => {
+        if (i % 2 === 0) { doc.rect(x, y - 3, w, 22).fill('#F1F5F9'); }
+        doc.fillColor(i === rows.length - 1 ? blue : '#111').fontSize(12);
+        doc.text(k, x + 8, y, { width: w / 2 });
+        doc.text(v, x + w / 2, y, { width: w / 2 - 8, align: 'right' });
+        y += 22;
+      });
+      doc.moveDown(2).fillColor('#999').fontSize(9).text('Bu rapor otomatik yedekleme ile oluşturulmuştur.', 50, y + 20);
+      doc.end();
+    } catch (e) { reject(e); }
+  });
+}
+function cleanupBackups(dir) {
+  for (const ext of ['db', 'json', 'xlsx', 'pdf']) {
+    try {
+      const all = fs.readdirSync(dir).filter(f => f.startsWith('satis-backup-') && f.endsWith('.' + ext)).sort();
+      while (all.length > 20) { const old = all.shift(); try { fs.unlinkSync(path.join(dir, old)); } catch {} }
+    } catch {}
+  }
+}
+async function runFolderBackup() {
   const dir = getSettings().backup_folder;
   if (!dir) return { ok: false, error: 'Yedek klasörü ayarlanmamış' };
+  try { if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); } catch (e) { return { ok: false, error: e.message }; }
+  const base = path.join(dir, 'satis-backup-' + dateStamp());
+  const done = [];
   try {
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    try { db.exec('PRAGMA wal_checkpoint(TRUNCATE)'); } catch {}
-    const file = `satis-backup-${dateStamp()}.db`;
-    fs.copyFileSync(path.join(DB_DIR, 'satis.db'), path.join(dir, file));
-    const all = fs.readdirSync(dir).filter(f => f.startsWith('satis-backup-') && f.endsWith('.db')).sort();
-    while (all.length > 30) { const old = all.shift(); try { fs.unlinkSync(path.join(dir, old)); } catch {} }
-    return { ok: true, file };
-  } catch (e) { return { ok: false, error: e.message }; }
+    const dbOut = (base + '.db').replace(/\\/g, '/').replace(/'/g, "''");
+    db.exec(`VACUUM INTO '${dbOut}'`);
+    done.push('db');
+  } catch {
+    try { db.exec('PRAGMA wal_checkpoint(TRUNCATE)'); fs.copyFileSync(path.join(DB_DIR, 'satis.db'), base + '.db'); done.push('db'); } catch {}
+  }
+  try { fs.writeFileSync(base + '.json', JSON.stringify(exportData(), null, 2)); done.push('json'); } catch {}
+  try { fs.writeFileSync(base + '.xlsx', await buildExcel()); done.push('xlsx'); } catch {}
+  try { fs.writeFileSync(base + '.pdf', await buildPdf()); done.push('pdf'); } catch {}
+  cleanupBackups(dir);
+  return { ok: done.length > 0, formats: done, error: done.length ? null : 'Hiçbir format yazılamadı' };
 }
 
 // Multer for file uploads
@@ -880,6 +989,22 @@ app.get('/yedek/db', auth, (req, res) => {
   try { db.exec('PRAGMA wal_checkpoint(TRUNCATE)'); } catch {}
   res.download(path.join(DB_DIR, 'satis.db'), `satis-${dateStamp()}.db`);
 });
+app.get('/yedek/excel', auth, async (req, res) => {
+  try {
+    const buf = await buildExcel();
+    res.setHeader('Content-Disposition', `attachment; filename="yedek-${dateStamp()}.xlsx"`);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.send(buf);
+  } catch (e) { req.session.flash = { type: 'error', msg: 'Excel oluşturulamadı: ' + e.message }; res.redirect('/yedek'); }
+});
+app.get('/yedek/pdf', auth, async (req, res) => {
+  try {
+    const buf = await buildPdf();
+    res.setHeader('Content-Disposition', `attachment; filename="yedek-ozet-${dateStamp()}.pdf"`);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.send(buf);
+  } catch (e) { req.session.flash = { type: 'error', msg: 'PDF oluşturulamadı: ' + e.message }; res.redirect('/yedek'); }
+});
 app.post('/yedek/yukle', auth, upload.single('file'), (req, res) => {
   try {
     if (!req.file) throw new Error('Dosya seçilmedi');
@@ -890,9 +1015,9 @@ app.post('/yedek/yukle', auth, upload.single('file'), (req, res) => {
   } catch (e) { req.session.flash = { type: 'error', msg: 'Yedek yüklenemedi: ' + e.message }; }
   res.redirect('/yedek');
 });
-app.post('/yedek/klasore', auth, (req, res) => {
-  const r = runFolderBackup();
-  req.session.flash = r.ok ? { type: 'success', msg: 'Klasöre yedeklendi: ' + r.file } : { type: 'error', msg: r.error };
+app.post('/yedek/klasore', auth, async (req, res) => {
+  const r = await runFolderBackup();
+  req.session.flash = r.ok ? { type: 'success', msg: 'Klasöre yedeklendi (' + r.formats.join(', ') + ')' } : { type: 'error', msg: r.error };
   res.redirect('/yedek');
 });
 app.post('/yedek/ayar', auth, (req, res) => {
@@ -1056,8 +1181,8 @@ setInterval(() => {
     const now = new Date();
     const today = now.toISOString().slice(0, 10);
     if (now.getHours() >= 20 && _lastBackupDay !== today) {
-      const r = runFolderBackup();
-      if (r.ok) _lastBackupDay = today;
+      _lastBackupDay = today;
+      runFolderBackup().catch(() => {});
     }
   } catch {}
 }, 10 * 60 * 1000); // her 10 dakikada bir kontrol

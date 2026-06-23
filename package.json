@@ -17,6 +17,7 @@
     "express": "^4.21.0",
     "express-session": "^1.18.0",
     "html-pdf-node": "^1.0.8",
-    "multer": "^2.2.0"
+    "multer": "^2.2.0",
+    "pdfkit": "^0.19.1"
   }
 }
