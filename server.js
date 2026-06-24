@@ -22,7 +22,7 @@ db.exec(`
     username TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
     name TEXT NOT NULL,
-    created_at TEXT DEFAULT (datetime('now','localtime'))
+    created_at TEXT DEFAULT (datetime('now','+3 hours'))
   );
   CREATE TABLE IF NOT EXISTS customers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,7 +32,7 @@ db.exec(`
     address TEXT,
     city TEXT,
     notes TEXT,
-    created_at TEXT DEFAULT (datetime('now','localtime'))
+    created_at TEXT DEFAULT (datetime('now','+3 hours'))
   );
   CREATE TABLE IF NOT EXISTS sales (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -46,7 +46,7 @@ db.exec(`
     payment_method TEXT DEFAULT 'Nakit',
     payment_status TEXT DEFAULT 'Ödendi',
     notes TEXT,
-    created_at TEXT DEFAULT (datetime('now','localtime')),
+    created_at TEXT DEFAULT (datetime('now','+3 hours')),
     FOREIGN KEY (customer_id) REFERENCES customers(id)
   );
   CREATE TABLE IF NOT EXISTS payments (
@@ -56,7 +56,7 @@ db.exec(`
     payment_date TEXT NOT NULL,
     method TEXT DEFAULT 'Nakit',
     note TEXT,
-    created_at TEXT DEFAULT (datetime('now','localtime')),
+    created_at TEXT DEFAULT (datetime('now','+3 hours')),
     FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE
   );
   CREATE TABLE IF NOT EXISTS stock (
@@ -67,7 +67,7 @@ db.exec(`
     min_quantity INTEGER NOT NULL DEFAULT 0,
     unit_cost REAL DEFAULT 0,
     category TEXT DEFAULT 'Klima',
-    created_at TEXT DEFAULT (datetime('now','localtime'))
+    created_at TEXT DEFAULT (datetime('now','+3 hours'))
   );
   CREATE TABLE IF NOT EXISTS quotes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -82,7 +82,7 @@ db.exec(`
     discount_value REAL DEFAULT 0,
     tax_rate REAL DEFAULT 20,
     notes TEXT,
-    created_at TEXT DEFAULT (datetime('now','localtime')),
+    created_at TEXT DEFAULT (datetime('now','+3 hours')),
     FOREIGN KEY (customer_id) REFERENCES customers(id)
   );
   CREATE TABLE IF NOT EXISTS quote_items (
@@ -102,7 +102,7 @@ db.exec(`
     quantity INTEGER NOT NULL,
     note TEXT,
     user_name TEXT,
-    created_at TEXT DEFAULT (datetime('now','localtime')),
+    created_at TEXT DEFAULT (datetime('now','+3 hours')),
     FOREIGN KEY (stock_id) REFERENCES stock(id) ON DELETE CASCADE
   );
   CREATE TABLE IF NOT EXISTS settings (
@@ -178,7 +178,8 @@ function getSettings() {
 
 // --- Yedekleme yardımcıları ---
 const BACKUP_TABLES = ['users','customers','sales','payments','stock','quotes','quote_items','stock_movements','transactions','settings'];
-function dateStamp() { return new Date().toISOString().slice(0,19).replace(/[:T]/g,'-'); }
+function trNow() { return new Date(Date.now() + 3 * 3600000); }
+function dateStamp() { return trNow().toISOString().slice(0,19).replace(/[:T]/g,'-'); }
 function exportData() {
   const out = { _meta: { app: 'confort-iklimlendirme', exported_at: new Date().toISOString() } };
   for (const t of BACKUP_TABLES) { try { out[t] = db.prepare('SELECT * FROM ' + t).all(); } catch { out[t] = []; } }
@@ -354,7 +355,7 @@ try { db.exec(`CREATE TABLE IF NOT EXISTS transactions (
   amount REAL NOT NULL DEFAULT 0,
   tx_date TEXT NOT NULL,
   description TEXT,
-  created_at TEXT DEFAULT (datetime('now','localtime'))
+  created_at TEXT DEFAULT (datetime('now','+3 hours'))
 )`); } catch {}
 
 // Varsayılan admin
@@ -606,9 +607,9 @@ app.post('/teklif/excel-import', auth, upload.single('file'), async (req, res) =
     if (!items.length) { req.session.flash = { type: 'error', msg: 'Excel dosyasında ürün bulunamadı' }; return res.redirect('/teklif/excel-import'); }
 
     const settings = getSettings();
-    const today = new Date().toISOString().slice(0, 10);
+    const today = trNow().toISOString().slice(0, 10);
     const validDays = Number(settings.default_valid_days) || 3;
-    const validDate = new Date(Date.now() + validDays * 86400000).toISOString().slice(0, 10);
+    const validDate = new Date(trNow().getTime() + validDays * 86400000).toISOString().slice(0, 10);
     const taxRate = Number(settings.default_tax_rate) || 20;
 
     const r = q.run('INSERT INTO quotes(customer_name,customer_phone,customer_address,quote_date,valid_until,status,discount_type,discount_value,tax_rate,notes) VALUES(?,?,?,?,?,?,?,?,?,?)',
@@ -1198,7 +1199,7 @@ async function autoBackupTick() {
     const s = getSettings();
     if (s.backup_auto !== '1') return;
     if (!s.backup_folder && !s.backup_folder2) return;
-    const target = scheduledTargetDay(new Date());
+    const target = scheduledTargetDay(trNow());
     if ((s.backup_last_date || '') >= target) return; // bu slot için zaten alınmış
     const r = await runFolderBackup();
     if (r.ok) q.run('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value', 'backup_last_date', target);
