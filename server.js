@@ -1185,20 +1185,27 @@ app.get('/teklif/:id/word', auth, async (req, res) => {
   res.end(buffer);
 });
 
-// Otomatik klasör yedeği — açıksa her akşam saat 20:00'de (gün sonu), günde bir kez
-let _lastBackupDay = '';
-setInterval(() => {
+// Otomatik klasör yedeği — her akşam 20:00; PC kapalıysa kaçan yedeği açılışta hemen alır
+const BACKUP_HOUR = 20;
+function localDay(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+function scheduledTargetDay(now) {
+  const d = new Date(now);
+  if (d.getHours() < BACKUP_HOUR) d.setDate(d.getDate() - 1); // 20:00'den önce → bir önceki günün yedek slotu
+  return localDay(d);
+}
+async function autoBackupTick() {
   try {
     const s = getSettings();
-    if (s.backup_auto !== '1' || !s.backup_folder) return;
-    const now = new Date();
-    const today = now.toISOString().slice(0, 10);
-    if (now.getHours() >= 20 && _lastBackupDay !== today) {
-      _lastBackupDay = today;
-      runFolderBackup().catch(() => {});
-    }
+    if (s.backup_auto !== '1') return;
+    if (!s.backup_folder && !s.backup_folder2) return;
+    const target = scheduledTargetDay(new Date());
+    if ((s.backup_last_date || '') >= target) return; // bu slot için zaten alınmış
+    const r = await runFolderBackup();
+    if (r.ok) q.run('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value', 'backup_last_date', target);
   } catch {}
-}, 10 * 60 * 1000); // her 10 dakikada bir kontrol
+}
+setTimeout(autoBackupTick, 15 * 1000);        // açılışta kaçan yedeği yakala
+setInterval(autoBackupTick, 10 * 60 * 1000);  // her 10 dakikada bir kontrol
 
 app.listen(PORT, () => {
   console.log(`\n  Confort Satış Takip → http://localhost:${PORT}`);
